@@ -174,6 +174,63 @@
     function requestRoll() {
         socket.send(json.stringify({'action': 'roll_dice'}));
     }
+    socket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        
+        if (data.type === 'init') {
+            myIdentity = data.player_identity;
+            document.getElementById('identity-label').innerText = myIdentity;
+        } 
+        else if (data.type === 'game_update') {
+            const state = data.state;
+            
+            // Clear all existing avatars from the board layout grids
+            document.querySelectorAll('.token-container').forEach(el => el.innerHTML = '');
+            
+            // Reposition player avatars based on incoming state data
+            for (const [player, position] of Object.entries(state.positions)) {
+                const tokenContainer = document.getElementById(`tokens-${position}`);
+                if (tokenContainer) {
+                    const pNum = player.split(' ')[1];
+                    const currentLap = state.laps[player] || 1;
+                    
+                    // Create the token element container
+                    const token = document.createElement('span');
+                    token.className = `token p${pNum}`;
+                    token.title = `${player} (Lap ${currentLap})`;
+                    
+                    // Visual Treatment for Lap 2 items: give it a distinct white core dot
+                    if(currentLap === 2) {
+                        token.style.boxShadow = "0 0 12px #fff, inset 0 0 0 3px #fff";
+                    }
+                    
+                    tokenContainer.appendChild(token);
+                }
+            }
+
+            // Update panel metrics cards layout values
+            document.getElementById('turn-label').innerText = state.current_turn;
+            document.getElementById('dice-value').innerText = data.dice;
+            
+            // Append history string logs
+            const logBox = document.getElementById('log-box');
+            logBox.innerHTML += `<div class="log-entry">[Match]: ${data.log}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+
+            // Turn switching controls enforcement
+            const rollBtn = document.getElementById('roll-button');
+            if (state.current_turn === myIdentity && !state.game_over) {
+                rollBtn.disabled = false;
+            } else {
+                rollBtn.disabled = true;
+            }
+
+            if(state.game_over) {
+                document.getElementById('turn-label').innerText = "Match Concluded!";
+                rollBtn.disabled = true;
+            }
+        }
+    };
 </script>
 </body>
 </html>
