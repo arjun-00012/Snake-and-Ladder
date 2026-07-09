@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Snake & Ladders Realtime Lobby</title>
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); text-align: center; max-width: 400px; width: 100%; }
+        h1 { margin-bottom: 1.5rem; font-size: 2rem; color: #38bdf8; }
+        input[type="text"] { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #475569; background: #334155; color: white; text-align: center; font-size: 1.1rem; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: background 0.2s; }
+        button:hover { background: #1d4ed8; }
+        .divider { margin: 15px 0; color: #64748b; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Snakes & Ladders</h1>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="text" name="room_code" placeholder="Enter Room Code (eg: XYZ123)" autocomplete="off">
+            <button type="submit">Join Existing Room</button>
+            <div class="divider">OR</div>
+            <button type="submit" name="create" value="1" style="background: #059669;">Create New Room</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Room {{ room_code }} - Match Arena</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { display: flex; gap: 30px; max-width: 1200px; width: 100%; align-items: flex-start; }
+        
+        /* The 10x10 Board Design Grid Configuration */
+        .board-wrapper { position: relative; width: 650px; height: 650px; background: #1e293b; padding: 10px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+        .board { display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); width: 100%; height: 100%; border: 2px solid #334155; }
+        .cell { border: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; box-sizing: border-box; font-weight: bold; font-size: 0.85rem; position: relative; }
+        
+        /* Attractive Color Theme Tones */
+        .bg-even-row .cell:nth-child(even), .bg-odd-row .cell:nth-child(odd) { background: #334155; }
+        .bg-even-row .cell:nth-child(odd), .bg-odd-row .cell:nth-child(even) { background: #1e293b; }
+        
+        /* Highlight Special Teleport Squares */
+        .cell.has-snake { background: rgba(239, 68, 68, 0.15) !important; color: #ef4444; }
+        .cell.has-ladder { background: rgba(16, 185, 129, 0.15) !important; color: #10b881; }
+        .special-label { font-size: 0.65rem; padding: 2px; border-radius: 4px; text-align: center; font-weight: normal; margin-top: auto; color: white;}
+        .snake-label { background: #dc2626; }
+        .ladder-label { background: #059669; }
+
+        /* Tokens/Avatars Layout Styles */
+        .token-container { display: flex; flex-wrap: wrap; gap: 4px; position: absolute; bottom: 5px; right: 5px; left: 5px; justify-content: center; }
+        .token { width: 18px; height: 18px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.4); display: inline-block; animation: bounce 0.4s ease infinite alternate; }
+        .token.p1 { background: #ef4444; }
+        .token.p2 { background: #3b82f6; }
+        .token.p3 { background: #eab308; }
+        .token.p4 { background: #a855f7; }
+
+        /* Control Panel Styles */
+        .sidebar { flex: 1; background: #1e293b; border-radius: 12px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); display: flex; flex-direction: column; height: 620px; }
+        h2 { margin-top: 0; color: #38bdf8; border-bottom: 2px solid #334155; padding-bottom: 10px; }
+        .room-tag { background: #334155; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 1.1rem; color: #f43f5e; display: inline-block; margin-bottom: 15px; }
+        .panel-section { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
+        .dice-display { font-size: 3rem; margin: 10px 0; font-weight: bold; color: #fbbf24; }
+        .btn-roll { width: 100%; padding: 15px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.4); }
+        .btn-roll:disabled { background: #475569; cursor: not-allowed; box-shadow: none; }
+        .log-box { flex: 1; background: #0f172a; border-radius: 8px; padding: 12px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #94a3b8; text-align: left; border: 1px solid #334155; }
+        .log-entry { margin-bottom: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 4px; }
+        
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- The Interactive Board UI Canvas Structure Grid wrapper -->
+    <div class="board-wrapper">
+        <div class="board" id="game-board"></div>
+    </div>
+
+    <!-- Panel Sidebar Controls Display Wrapper Section -->
+    <div class="sidebar">
+        <h2>Game Dashboard</h2>
+        <div>Room Connection Code:</div>
+        <div class="room-tag" id="room-display">{{ room_code }}</div>
+        <p style="font-size: 0.85rem; color:#94a3b8; margin-top:-10px;">Copy the current browser address URL bar link and send it to your friend to join!</p>
+        
+        <div class="panel-section">
+            <div>Your Assigned ID: <strong id="identity-label" style="color:#10b881;">Spectator</strong></div>
+            <div style="margin-top: 10px;">Active Turn: <span id="turn-label" style="font-weight:bold; color:#f43f5e;">Waiting...</span></div>
+        </div>
+
+        <div class="panel-section">
+            <div>Last Dice Value:</div>
+            <div class="dice-display" id="dice-value">-</div>
+            <button class="btn-roll" id="roll-button" disabled onclick="requestRoll()">ROLL DICE</button>
+        </div>
+
+        <div class="log-box" id="log-box">
+            <div class="log-entry">[System]: Welcome to Arena! Awaiting peer handshake setup.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const roomCode = "{{ room_code }}";
+    // Setup clean conditional checking to handle secure connections when hosted live
+    const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const wsUrl = `${wsScheme}://${window.location.host}/ws/game/${roomCode}/`;
+    const socket = new WebSocket(wsUrl);
+
+    let myIdentity = null;
+    
+    const snakes = {16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 98: 78};
+    const ladders = {1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 100};
+
+    // Render the layout board cells in a zigzag manner (Boustrophedon layout pattern)
+    const boardElement = document.getElementById('game-board');
+    for (let row = 0; row < 10; row++) {
+        const rowNum = 9 - row; 
+        const isEvenRow = rowNum % 2 === 0;
+        
+        // Apply styling container class depending on row sequence position
+        const rowContainer = document.createElement('div');
+        rowContainer.style.display = 'contents';
+        rowContainer.className = isEvenRow ? 'bg-even-row' : 'bg-odd-row';
+
+        let cellsArray = [];
+        for (let col = 1; col <= 10; col++) {
+            let cellId = isEvenRow ? (rowNum * 10 + (11 - col)) : (rowNum * 10 + col);
+            
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.id = `cell-${cellId}`;
+            cell.innerHTML = `<span>${cellId}</span><div class="token-container" id="tokens-${cellId}"></div>`;
+            
+            if(snakes[cellId]) {
+                cell.classList.add('has-snake');
+                cell.innerHTML += `<div class="special-label snake-label">↳ Snake ➜ ${snakes[cellId]}</div>`;
+            } else if(ladders[cellId]) {
+                cell.classList.add('has-ladder');
+                cell.innerHTML += `<div class="special-label ladder-label">▲ Ladder ➜ ${ladders[cellId]}</div>`;
+            }
+            cellsArray.push(cell);
+        }
+        
+        // Append child node maps directly inside the standard layout block frame
+        cellsArray.forEach(cellDom => boardElement.appendChild(cellDom));
+    }
+
+    socket.onmessage = function(e) {
+        const data = json.parse(e.data);
+        
+        if (data.type === 'init') {
+            myIdentity = data.player_identity;
+            document.getElementById('identity-label').innerText = myIdentity;
+        } 
+        else if (data.type === 'game_update') {
+            const state = data.state;
+            
+            // Clear all existing avatars from the board
+            document.querySelectorAll('.token-container').forEach(el => el.innerHTML = '');
+            
+            // Reposition player avatars based on incoming state data
+            for (const [player, position] of Object.entries(state.positions)) {
+                const tokenContainer = document.getElementById(`tokens-${position}`);
+                if (tokenContainer) {
+                    const pNum = player.split(' ')[1];
+                    const token = document.createElement('span');
+                    token.className = `token p${pNum}`;
+                    token.title = player;
+                    tokenContainer.appendChild(token);
+                }
+            }
+
+            // Update state metrics layout cards
+            document.getElementById('turn-label').innerText = state.current_turn;
+            document.getElementById('dice-value').innerText = data.dice;
+            
+            // Append event updates to the console history list box panel
+            const logBox = document.getElementById('log-box');
+            logBox.innerHTML += `<div class="log-entry">[Match]: ${data.log}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+
+            // Enforce turn switching across clients
+            const rollBtn = document.getElementById('roll-button');
+            if (state.current_turn === myIdentity && !state.game_over) {
+                rollBtn.disabled = false;
+            } else {
+                rollBtn.disabled = true;
+            }
+
+            if(state.game_over) {
+                document.getElementById('turn-label').innerText = "Match Concluded!";
+                rollBtn.disabled = true;
+            }
+        }
+    };
+
+    function requestRoll() {
+        socket.send(json.stringify({'action': 'roll_dice'}));
+    }
+</script>
+</body>
+</html>
