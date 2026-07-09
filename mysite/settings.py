@@ -6,6 +6,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-your-secret-key-here'
 DEBUG = True
 ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
+
+# Add this block right below ALLOWED_HOSTS to fix the 403 error:
+CSRF_TRUSTED_ORIGINS = [
+    'https://snake-and-ladder-qb1x.onrender.com',
+]
 INSTALLED_APPS = [
     'daphne', # Must be at the top for Channels 4+
     'django.contrib.admin',
