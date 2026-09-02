@@ -1,236 +1,2040 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Room {{ room_code }} - Match Arena</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room {{ room_code }} - Snakes & Ladders Arena</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti Library for Victory Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { display: flex; gap: 30px; max-width: 1200px; width: 100%; align-items: flex-start; }
-        
-        /* The 10x10 Board Design Grid Configuration */
-        .board-wrapper { position: relative; width: 650px; height: 650px; background: #1e293b; padding: 10px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
-        .board { display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); width: 100%; height: 100%; border: 2px solid #334155; }
-        .cell { border: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; box-sizing: border-box; font-weight: bold; font-size: 0.85rem; position: relative; }
-        
-        /* Attractive Color Theme Tones */
-        .bg-even-row .cell:nth-child(even), .bg-odd-row .cell:nth-child(odd) { background: #334155; }
-        .bg-even-row .cell:nth-child(odd), .bg-odd-row .cell:nth-child(even) { background: #1e293b; }
-        
-        /* Highlight Special Teleport Squares */
-        .cell.has-snake { background: rgba(239, 68, 68, 0.15) !important; color: #ef4444; }
-        .cell.has-ladder { background: rgba(16, 185, 129, 0.15) !important; color: #10b881; }
-        .special-label { font-size: 0.65rem; padding: 2px; border-radius: 4px; text-align: center; font-weight: normal; margin-top: auto; color: white;}
-        .snake-label { background: #dc2626; }
-        .ladder-label { background: #059669; }
+        :root {
+            --bg-primary: #090d16;
+            --bg-card: rgba(18, 24, 38, 0.88);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-active: rgba(56, 189, 248, 0.5);
+            --accent-blue: #38bdf8;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --accent-purple: #a855f7;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
 
-        /* Tokens/Avatars Layout Styles */
-        .token-container { display: flex; flex-wrap: wrap; gap: 4px; position: absolute; bottom: 5px; right: 5px; left: 5px; justify-content: center; }
-        .token { width: 18px; height: 18px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.4); display: inline-block; animation: bounce 0.4s ease infinite alternate; }
-        .token.p1 { background: #ef4444; }
-        .token.p2 { background: #3b82f6; }
-        .token.p3 { background: #eab308; }
-        .token.p4 { background: #a855f7; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-        /* Control Panel Styles */
-        .sidebar { flex: 1; background: #1e293b; border-radius: 12px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); display: flex; flex-direction: column; height: 620px; }
-        h2 { margin-top: 0; color: #38bdf8; border-bottom: 2px solid #334155; padding-bottom: 10px; }
-        .room-tag { background: #334155; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 1.1rem; color: #f43f5e; display: inline-block; margin-bottom: 15px; }
-        .panel-section { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
-        .dice-display { font-size: 3rem; margin: 10px 0; font-weight: bold; color: #fbbf24; }
-        .btn-roll { width: 100%; padding: 15px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.4); }
-        .btn-roll:disabled { background: #475569; cursor: not-allowed; box-shadow: none; }
-        .log-box { flex: 1; background: #0f172a; border-radius: 8px; padding: 12px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #94a3b8; text-align: left; border: 1px solid #334155; }
-        .log-entry { margin-bottom: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 4px; }
-        
-        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .glow-1 { top: -100px; left: -100px; background: #38bdf8; }
+        .glow-2 { bottom: -100px; right: -100px; background: #a855f7; }
+
+        /* Top Header Navigation */
+        .top-navbar {
+            width: 100%;
+            max-width: 1300px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            z-index: 20;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #38bdf8, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .room-code-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-family: 'Outfit', monospace;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--accent-amber);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .room-code-badge:hover {
+            border-color: var(--accent-amber);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon:hover {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: var(--accent-blue);
+        }
+
+        .btn-leave {
+            background: rgba(244, 63, 94, 0.15);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            color: var(--accent-rose);
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-leave:hover {
+            background: rgba(244, 63, 94, 0.25);
+        }
+
+        /* Main Game Layout */
+        .game-layout {
+            width: 100%;
+            max-width: 1300px;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+            align-items: start;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 10x10 Board Area */
+        .board-container {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .board-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 680px;
+            aspect-ratio: 1 / 1;
+            background: #0f172a;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 3px solid #1e293b;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Grid */
+        .grid-board {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .cell {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 4px;
+            box-sizing: border-box;
+            border: 0.5px solid rgba(255, 255, 255, 0.05);
+            user-select: none;
+            transition: background 0.3s ease;
+        }
+
+        .cell-even { background: #131d31; }
+        .cell-odd { background: #1a2640; }
+
+        .cell-num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.45);
+            line-height: 1;
+        }
+
+        .cell.tile-start {
+            background: radial-gradient(circle at center, rgba(16, 185, 129, 0.25) 0%, #131d31 80%);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        .cell.tile-start .cell-num {
+            color: var(--accent-emerald);
+            font-weight: 800;
+        }
+        .start-badge {
+            font-size: 0.55rem;
+            font-weight: 800;
+            color: #10b981;
+            text-transform: uppercase;
+        }
+
+        .cell.tile-win {
+            background: radial-gradient(circle at center, rgba(245, 158, 11, 0.35) 0%, #1a2640 80%);
+            border: 1.5px solid rgba(245, 158, 11, 0.6);
+        }
+        .cell.tile-win .cell-num {
+            color: var(--accent-amber);
+            font-weight: 900;
+        }
+        .win-badge {
+            font-size: 0.65rem;
+            text-align: right;
+        }
+
+        /* Snake Head & Ladder Base Markers */
+        .cell.snake-head {
+            background: rgba(239, 68, 68, 0.12);
+        }
+        .cell.snake-head::after {
+            content: '🐍 ↳' attr(data-dest);
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.2);
+            padding: 1px 3px;
+            border-radius: 4px;
+        }
+
+        .cell.ladder-base {
+            background: rgba(16, 185, 129, 0.12);
+        }
+        .cell.ladder-base::after {
+            content: '🪜 ⇡' attr(data-dest);
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.2);
+            padding: 1px 3px;
+            border-radius: 4px;
+        }
+
+        /* SVG Overlay for Snakes & Ladders */
+        .svg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .snake-path {
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: filter 0.3s ease, stroke-width 0.3s ease;
+        }
+        .snake-shadow {
+            stroke: rgba(0, 0, 0, 0.5);
+            stroke-width: 24;
+            filter: blur(4px);
+        }
+        .snake-body {
+            stroke-width: 18;
+        }
+        .snake-pattern {
+            stroke: rgba(255, 255, 255, 0.4);
+            stroke-width: 6;
+            stroke-dasharray: 6 12;
+        }
+
+        .snake-active .snake-body {
+            stroke: #ff2a55 !important;
+            filter: drop-shadow(0 0 16px #ff2a55);
+            animation: snakePulse 0.4s ease-in-out infinite alternate;
+        }
+        @keyframes snakePulse {
+            from { stroke-width: 18; }
+            to { stroke-width: 26; }
+        }
+
+        .ladder-rail {
+            stroke-width: 6;
+            stroke-linecap: round;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+        }
+        .ladder-rung {
+            stroke-width: 4.5;
+            stroke-linecap: round;
+        }
+
+        .ladder-active .ladder-rail, .ladder-active .ladder-rung {
+            stroke: #fbbf24 !important;
+            filter: drop-shadow(0 0 12px #fbbf24);
+            animation: ladderPulse 0.4s ease-in-out infinite alternate;
+        }
+        @keyframes ladderPulse {
+            from { stroke-width: 5; }
+            to { stroke-width: 8; }
+        }
+
+        /* Tokens Layer */
+        .tokens-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .player-token {
+            position: absolute;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            color: white;
+            border: 2.5px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            transform: translate(-50%, -50%);
+            transition: left 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.2s ease;
+            z-index: 10;
+        }
+
+        .player-token.hopping {
+            animation: hopBounce 0.22s ease-in-out;
+            z-index: 20;
+        }
+
+        @keyframes hopBounce {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -85%) scale(1.35); box-shadow: 0 14px 20px rgba(0,0,0,0.5); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .player-token.sliding {
+            transition: left 0.7s cubic-bezier(0.25, 1, 0.5, 1), top 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+            animation: tokenShake 0.7s ease;
+        }
+        @keyframes tokenShake {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            20% { transform: translate(-50%, -50%) rotate(-15deg) scale(1.1); }
+            40% { transform: translate(-50%, -50%) rotate(15deg) scale(1.1); }
+            60% { transform: translate(-50%, -50%) rotate(-10deg); }
+            80% { transform: translate(-50%, -50%) rotate(10deg); }
+        }
+
+        .player-token.climbing {
+            transition: left 0.7s cubic-bezier(0.34, 1.2, 0.64, 1), top 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
+            filter: drop-shadow(0 0 12px #fbbf24);
+        }
+
+        .floating-reaction {
+            position: absolute;
+            font-size: 2.2rem;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 30;
+            animation: floatUpFade 1.6s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+        }
+        @keyframes floatUpFade {
+            0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+            20% { transform: translate(-50%, -100%) scale(1.3); opacity: 1; }
+            70% { transform: translate(-50%, -180%) scale(1.1); opacity: 0.9; }
+            100% { transform: translate(-50%, -240%) scale(0.9); opacity: 0; }
+        }
+
+        /* Sidebar Control Panel */
+        .sidebar-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Turn Indicator Card */
+        .turn-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-radius: 18px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1.5px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .turn-card.my-turn {
+            border-color: var(--accent-blue);
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(15, 23, 42, 0.9));
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.25);
+        }
+
+        .turn-avatar-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: #1e293b;
+            border: 2px solid var(--accent-blue);
+        }
+
+        .turn-info {
+            flex: 1;
+            margin-left: 12px;
+        }
+
+        .turn-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .turn-player-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        /* Dice Roller Section */
+        .dice-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .dice-scene {
+            width: 80px;
+            height: 80px;
+            perspective: 600px;
+            margin: 8px 0;
+        }
+
+        .cube-dice {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-20deg) rotateY(-25deg);
+            transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .cube-dice.rolling {
+            animation: diceRollAnim 0.7s linear infinite;
+        }
+
+        @keyframes diceRollAnim {
+            0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+            100% { transform: rotateX(720deg) rotateY(1080deg) rotateZ(360deg); }
+        }
+
+        .dice-face {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(145deg, #ffffff, #e2e8f0);
+            border: 2px solid #cbd5e1;
+            border-radius: 16px;
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0,0,0,0.3);
+            display: grid;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .face-1 { transform: rotateY(0deg) translateZ(40px); grid-template-areas: ". . ." ". c ." ". . ."; }
+        .face-2 { transform: rotateY(90deg) translateZ(40px); grid-template-areas: "a . ." ". . ." ". . b"; }
+        .face-3 { transform: rotateY(180deg) translateZ(40px); grid-template-areas: "a . ." ". c ." ". . b"; }
+        .face-4 { transform: rotateY(-90deg) translateZ(40px); grid-template-areas: "a . b" ". . ." "c . d"; }
+        .face-5 { transform: rotateX(90deg) translateZ(40px); grid-template-areas: "a . b" ". c ." "d . e"; }
+        .face-6 { transform: rotateX(-90deg) translateZ(40px); grid-template-areas: "a . b" "c . d" "e . f"; }
+
+        .pip {
+            display: block;
+            width: 14px;
+            height: 14px;
+            background: #0f172a;
+            border-radius: 50%;
+            margin: auto;
+            box-shadow: inset 0 2px 3px rgba(0,0,0,0.5);
+        }
+        .pip-red { background: #ef4444; }
+
+        .face-1 .pip:nth-child(1) { grid-area: c; }
+        .face-2 .pip:nth-child(1) { grid-area: a; }
+        .face-2 .pip:nth-child(2) { grid-area: b; }
+        .face-3 .pip:nth-child(1) { grid-area: a; }
+        .face-3 .pip:nth-child(2) { grid-area: c; }
+        .face-3 .pip:nth-child(3) { grid-area: b; }
+        .face-4 .pip:nth-child(1) { grid-area: a; }
+        .face-4 .pip:nth-child(2) { grid-area: b; }
+        .face-4 .pip:nth-child(3) { grid-area: c; }
+        .face-4 .pip:nth-child(4) { grid-area: d; }
+        .face-5 .pip:nth-child(1) { grid-area: a; }
+        .face-5 .pip:nth-child(2) { grid-area: b; }
+        .face-5 .pip:nth-child(3) { grid-area: c; }
+        .face-5 .pip:nth-child(4) { grid-area: d; }
+        .face-5 .pip:nth-child(5) { grid-area: e; }
+        .face-6 .pip:nth-child(1) { grid-area: a; }
+        .face-6 .pip:nth-child(2) { grid-area: b; }
+        .face-6 .pip:nth-child(3) { grid-area: c; }
+        .face-6 .pip:nth-child(4) { grid-area: d; }
+        .face-6 .pip:nth-child(5) { grid-area: e; }
+        .face-6 .pip:nth-child(6) { grid-area: f; }
+
+        /* Roll Button */
+        .btn-roll-dice {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #2563eb, #38bdf8);
+            color: #ffffff;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px -4px rgba(37, 99, 235, 0.6);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-roll-dice:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 30px -4px rgba(37, 99, 235, 0.75);
+        }
+
+        .btn-roll-dice:disabled {
+            background: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-roll-dice.pulse {
+            animation: rollPulse 1.5s infinite;
+        }
+        @keyframes rollPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+            50% { box-shadow: 0 0 0 14px rgba(56, 189, 248, 0); }
+        }
+
+        /* Players Scoreboard List */
+        .players-card {
+            padding: 16px;
+        }
+
+        .card-header-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .players-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .player-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .player-row.active-turn {
+            border-color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .player-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-color-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .player-name-text {
+            font-weight: 700;
+            font-size: 0.92rem;
+        }
+
+        .player-pos-badge {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.9rem;
+            padding: 4px 10px;
+            background: #1e293b;
+            border-radius: 8px;
+            color: var(--accent-blue);
+        }
+
+        /* Quick Reactions */
+        .reactions-bar {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .btn-reaction {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 1.3rem;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease;
+            flex: 1;
+        }
+        .btn-reaction:hover {
+            transform: scale(1.2);
+            background: rgba(56, 189, 248, 0.2);
+        }
+
+        /* Match Log */
+        .log-panel {
+            height: 140px;
+            background: rgba(10, 15, 26, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 12px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .log-item {
+            line-height: 1.35;
+        }
+        .log-item.highlight {
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        /* LOBBY / WAITING SCREEN OVERLAY */
+        .lobby-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(9, 13, 22, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .lobby-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .lobby-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 32px;
+            max-width: 560px;
+            width: 100%;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        .lobby-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .lobby-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .share-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+
+        .share-code {
+            font-family: 'Outfit', monospace;
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--accent-amber);
+        }
+
+        .btn-copy {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--accent-amber);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-copy:hover {
+            background: rgba(245, 158, 11, 0.3);
+        }
+
+        /* Color chooser in room lobby */
+        .lobby-color-picker {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mini-color-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mini-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .mini-swatch:hover {
+            transform: scale(1.15);
+        }
+        .mini-swatch.active {
+            border-color: white;
+            box-shadow: 0 0 10px currentColor;
+            transform: scale(1.2);
+        }
+
+        /* Target players toggle for host */
+        .capacity-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 10px 16px;
+            margin-bottom: 20px;
+        }
+
+        .capacity-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .cap-btn {
+            padding: 5px 12px;
+            background: #1e293b;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cap-btn.active {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--accent-emerald);
+            color: var(--accent-emerald);
+        }
+
+        .lobby-players-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .lobby-slot {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1.5px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 95px;
+            gap: 4px;
+        }
+
+        .lobby-slot.occupied {
+            border-style: solid;
+            border-color: var(--border-active);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .slot-avatar {
+            font-size: 1.8rem;
+        }
+
+        .slot-name {
+            font-weight: 700;
+            font-size: 0.92rem;
+        }
+
+        .slot-tag {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            background: #334155;
+            color: #94a3b8;
+        }
+
+        .slot-tag.host {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-amber);
+        }
+
+        .lobby-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-start-game {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.5);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-start-game:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 14px 30px -5px rgba(16, 185, 129, 0.65);
+        }
+
+        .btn-bot-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            padding: 10px;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: var(--accent-blue);
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover {
+            background: rgba(56, 189, 248, 0.25);
+        }
+
+        .guest-waiting-text {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        /* VICTORY CELEBRATION MODAL */
+        .victory-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 150;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .victory-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .victory-content {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-amber);
+            border-radius: 28px;
+            padding: 40px 32px;
+            max-width: 460px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(245, 158, 11, 0.35);
+            transform: scale(0.85);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .victory-modal.show .victory-content {
+            transform: scale(1);
+        }
+
+        .victory-trophy {
+            font-size: 4rem;
+            margin-bottom: 12px;
+            animation: trophyBounce 1s infinite alternate;
+        }
+        @keyframes trophyBounce {
+            from { transform: translateY(0) scale(1); }
+            to { transform: translateY(-8px) scale(1.1); }
+        }
+
+        .victory-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .winner-name-highlight {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 24px;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px solid var(--accent-blue);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            z-index: 200;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 992px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar-panel {
+                max-width: 680px;
+                margin: 0 auto;
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- The Interactive Board UI Canvas Structure Grid wrapper -->
-    <div class="board-wrapper">
-        <div class="board" id="game-board"></div>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <!-- Top Navigation -->
+    <header class="top-navbar">
+        <div class="brand-section">
+            <span class="brand-logo">🐍⚡ SNAKES & LADDERS</span>
+            <div class="room-code-badge" onclick="copyRoomCode()" title="Click to copy room code">
+                <span>ROOM:</span>
+                <span id="nav-room-code">{{ room_code }}</span>
+                <span>📋</span>
+            </div>
+        </div>
+
+        <div class="nav-actions">
+            <button class="btn-icon" id="sound-btn" onclick="toggleSound()" title="Mute/Unmute Audio">🔊</button>
+            <a href="/" class="btn-leave">Exit Arena</a>
+        </div>
+    </header>
+
+    <!-- Main Game Section -->
+    <main class="game-layout">
+        <!-- Board Wrapper -->
+        <div class="board-container">
+            <div class="board-wrapper" id="board-wrapper">
+                <!-- 10x10 HTML Grid Tiles -->
+                <div class="grid-board" id="grid-board"></div>
+
+                <!-- SVG Overlay for Snakes & Ladders Graphics -->
+                <svg class="svg-overlay" id="svg-overlay" viewBox="0 0 1000 1000">
+                    <defs>
+                        <!-- Gradients for Snakes -->
+                        <linearGradient id="snakeGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ef4444" />
+                            <stop offset="100%" stop-color="#7f1d1d" />
+                        </linearGradient>
+                        <linearGradient id="snakeGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#10b981" />
+                            <stop offset="100%" stop-color="#064e3b" />
+                        </linearGradient>
+                        <linearGradient id="snakeGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#a855f7" />
+                            <stop offset="100%" stop-color="#4c1d95" />
+                        </linearGradient>
+
+                        <!-- Gradients for Ladders -->
+                        <linearGradient id="ladderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#fef08a" />
+                            <stop offset="50%" stop-color="#eab308" />
+                            <stop offset="100%" stop-color="#ca8a04" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Group for Ladder elements -->
+                    <g id="ladders-group"></g>
+
+                    <!-- Group for Snake elements -->
+                    <g id="snakes-group"></g>
+                </svg>
+
+                <!-- Tokens Layer -->
+                <div class="tokens-layer" id="tokens-layer"></div>
+            </div>
+        </div>
+
+        <!-- Sidebar Game Controls -->
+        <div class="sidebar-panel">
+            <!-- Active Turn Display -->
+            <div class="turn-card" id="turn-card">
+                <div class="turn-avatar-badge" id="turn-avatar">🦊</div>
+                <div class="turn-info">
+                    <div class="turn-label">Current Turn</div>
+                    <div class="turn-player-name" id="turn-name">Waiting...</div>
+                </div>
+            </div>
+
+            <!-- Dice Roller Card -->
+            <div class="glass-card dice-section">
+                <div class="dice-scene">
+                    <div class="cube-dice" id="cube-dice">
+                        <div class="dice-face face-1"><span class="pip pip-red"></span></div>
+                        <div class="dice-face face-2"><span class="pip"></span><span class="pip"></span></div>
+                        <div class="dice-face face-3"><span class="pip"></span><span class="pip pip-red"></span><span class="pip"></span></div>
+                        <div class="dice-face face-4"><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span></div>
+                        <div class="dice-face face-5"><span class="pip"></span><span class="pip"></span><span class="pip pip-red"></span><span class="pip"></span><span class="pip"></span></div>
+                        <div class="dice-face face-6"><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span></div>
+                    </div>
+                </div>
+
+                <button class="btn-roll-dice" id="roll-btn" disabled onclick="requestRoll()">
+                    <span>🎲 ROLL DICE</span>
+                </button>
+            </div>
+
+            <!-- Players Scoreboard -->
+            <div class="glass-card players-card">
+                <div class="card-header-title">
+                    <span>Players</span>
+                    <span id="player-count-tag">1/4</span>
+                </div>
+                <div class="players-list" id="players-list"></div>
+            </div>
+
+            <!-- Quick Emoji Reactions -->
+            <div class="glass-card" style="padding: 12px 16px;">
+                <div class="reactions-bar">
+                    <button class="btn-reaction" onclick="sendReaction('🔥')">🔥</button>
+                    <button class="btn-reaction" onclick="sendReaction('😂')">😂</button>
+                    <button class="btn-reaction" onclick="sendReaction('🐍')">🐍</button>
+                    <button class="btn-reaction" onclick="sendReaction('🪜')">🪜</button>
+                    <button class="btn-reaction" onclick="sendReaction('🏆')">🏆</button>
+                    <button class="btn-reaction" onclick="sendReaction('👏')">👏</button>
+                </div>
+            </div>
+
+            <!-- Match Activity Log -->
+            <div class="glass-card" style="padding: 14px;">
+                <div class="log-panel" id="log-panel">
+                    <div class="log-item highlight">⚔️ Connected to Arena. Setting up match...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- IN-ROOM LOBBY / WAITING SCREEN OVERLAY -->
+    <div class="lobby-overlay" id="lobby-overlay">
+        <div class="lobby-modal">
+            <h2 class="lobby-title">Match Lobby</h2>
+            <p class="lobby-subtitle">Share room code or invite friends to join on their laptops / devices</p>
+
+            <div class="share-box">
+                <div>
+                    <div style="font-size:0.75rem; color:#94a3b8; font-weight:700;">ROOM CODE</div>
+                    <div class="share-code" id="modal-room-code">{{ room_code }}</div>
+                </div>
+                <button class="btn-copy" onclick="copyInviteLink()">Copy Invite Link 🔗</button>
+            </div>
+
+            <!-- Color Selection in Lobby -->
+            <div class="lobby-color-picker">
+                <span style="font-size:0.85rem; font-weight:700; color:#94a3b8;">Your Token Color:</span>
+                <div class="mini-color-row" id="mini-color-row">
+                    <div class="mini-swatch" style="background:#ef4444;" data-color="#ef4444" onclick="changeMyColor('#ef4444')"></div>
+                    <div class="mini-swatch" style="background:#3b82f6;" data-color="#3b82f6" onclick="changeMyColor('#3b82f6')"></div>
+                    <div class="mini-swatch" style="background:#eab308;" data-color="#eab308" onclick="changeMyColor('#eab308')"></div>
+                    <div class="mini-swatch" style="background:#a855f7;" data-color="#a855f7" onclick="changeMyColor('#a855f7')"></div>
+                    <div class="mini-swatch" style="background:#10b981;" data-color="#10b981" onclick="changeMyColor('#10b981')"></div>
+                    <div class="mini-swatch" style="background:#f97316;" data-color="#f97316" onclick="changeMyColor('#f97316')"></div>
+                </div>
+            </div>
+
+            <!-- Host Target Players Control -->
+            <div class="capacity-bar" id="host-capacity-bar" style="display:none;">
+                <span style="font-size:0.85rem; font-weight:700; color:#94a3b8;">Players Needed:</span>
+                <div class="capacity-buttons">
+                    <button class="cap-btn" id="cap-btn-2" onclick="setTargetPlayers(2)">2 Players</button>
+                    <button class="cap-btn" id="cap-btn-3" onclick="setTargetPlayers(3)">3 Players</button>
+                    <button class="cap-btn" id="cap-btn-4" onclick="setTargetPlayers(4)">4 Players</button>
+                </div>
+            </div>
+
+            <!-- Dynamic Player Slots Grid -->
+            <div class="lobby-players-grid" id="lobby-slots-grid"></div>
+
+            <div class="lobby-controls" id="lobby-host-controls" style="display:none;">
+                <button class="btn-start-game" id="start-game-btn" onclick="startGame()">
+                    <span>🚀 START GAME</span>
+                </button>
+                <div class="btn-bot-row">
+                    <button class="btn-secondary" onclick="addBot()">+ Add AI Bot 🤖</button>
+                    <button class="btn-secondary" onclick="removeBot()">- Remove Bot</button>
+                </div>
+            </div>
+
+            <div id="lobby-guest-controls" style="display:none;">
+                <div class="guest-waiting-text">
+                    <span style="display:inline-block; animation: hopBounce 1s infinite;">⏳</span>
+                    Waiting for Host to start the match...
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Panel Sidebar Controls Display Wrapper Section -->
-    <div class="sidebar">
-        <h2>Game Dashboard</h2>
-        <div>Room Connection Code:</div>
-        <div class="room-tag" id="room-display">{{ room_code }}</div>
-        <p style="font-size: 0.85rem; color:#94a3b8; margin-top:-10px;">Copy the current browser address URL bar link and send it to your friend to join!</p>
-        
-        <div class="panel-section">
-            <div>Your Assigned ID: <strong id="identity-label" style="color:#10b881;">Spectator</strong></div>
-            <div style="margin-top: 10px;">Active Turn: <span id="turn-label" style="font-weight:bold; color:#f43f5e;">Waiting...</span></div>
-        </div>
-
-        <div class="panel-section">
-            <div>Last Dice Value:</div>
-            <div class="dice-display" id="dice-value">-</div>
-            <button class="btn-roll" id="roll-button" disabled onclick="requestRoll()">ROLL DICE</button>
-        </div>
-
-        <div class="log-box" id="log-box">
-            <div class="log-entry">[System]: Welcome to Arena! Awaiting peer handshake setup.</div>
+    <!-- VICTORY CELEBRATION MODAL -->
+    <div class="victory-modal" id="victory-modal">
+        <div class="victory-content">
+            <div class="victory-trophy">🏆</div>
+            <h2 class="victory-title">VICTORY!</h2>
+            <div class="winner-name-highlight" id="winner-name-text">Player 1 Won!</div>
+            <button class="btn-start-game" onclick="restartGame()">
+                <span>🔄 PLAY AGAIN</span>
+            </button>
         </div>
     </div>
-</div>
 
-<script>
-    const roomCode = "{{ room_code }}";
-    // Setup clean conditional checking to handle secure connections when hosted live
-    const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${wsScheme}://${window.location.host}/ws/game/${roomCode}/`;
-    const socket = new WebSocket(wsUrl);
+    <!-- Toast Notification -->
+    <div class="toast" id="toast-msg">Copied to clipboard!</div>
 
-    let myIdentity = null;
-    
-    const snakes = {16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 98: 78};
-    const ladders = {1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 100};
+    <script>
+        const roomCode = "{{ room_code }}";
+        const myName = "{{ default_player_name|escapejs }}";
+        const myAvatar = "{{ default_avatar|escapejs }}";
+        let myChosenColor = "{{ default_color|escapejs }}";
+        const myTarget = parseInt("{{ default_target|escapejs }}") || 2;
+        const myMode = "{{ default_mode|escapejs }}";
 
-    // Render the layout board cells in a zigzag manner (Boustrophedon layout pattern)
-    const boardElement = document.getElementById('game-board');
-    for (let row = 0; row < 10; row++) {
-        const rowNum = 9 - row; 
-        const isEvenRow = rowNum % 2 === 0;
-        
-        // Apply styling container class depending on row sequence position
-        const rowContainer = document.createElement('div');
-        rowContainer.style.display = 'contents';
-        rowContainer.className = isEvenRow ? 'bg-even-row' : 'bg-odd-row';
+        // WebSocket Setup (Auto supports Render wss:// & ws://)
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsUrl = `${wsScheme}://${window.location.host}/ws/game/${roomCode}/`;
+        const socket = new WebSocket(wsUrl);
 
-        let cellsArray = [];
-        for (let col = 1; col <= 10; col++) {
-            let cellId = isEvenRow ? (rowNum * 10 + (11 - col)) : (rowNum * 10 + col);
-            
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.id = `cell-${cellId}`;
-            cell.innerHTML = `<span>${cellId}</span><div class="token-container" id="tokens-${cellId}"></div>`;
-            
-            if(snakes[cellId]) {
-                cell.classList.add('has-snake');
-                cell.innerHTML += `<div class="special-label snake-label">↳ Snake ➜ ${snakes[cellId]}</div>`;
-            } else if(ladders[cellId]) {
-                cell.classList.add('has-ladder');
-                cell.innerHTML += `<div class="special-label ladder-label">▲ Ladder ➜ ${ladders[cellId]}</div>`;
-            }
-            cellsArray.push(cell);
-        }
-        
-        // Append child node maps directly inside the standard layout block frame
-        cellsArray.forEach(cellDom => boardElement.appendChild(cellDom));
-    }
+        let myId = null;
+        let isHost = false;
+        let currentRoomState = null;
+        let snakesMap = {};
+        let laddersMap = {};
+        let soundEnabled = true;
 
-    socket.onmessage = function(e) {
-        const data = json.parse(e.data);
-        
-        if (data.type === 'init') {
-            myIdentity = data.player_identity;
-            document.getElementById('identity-label').innerText = myIdentity;
-        } 
-        else if (data.type === 'game_update') {
-            const state = data.state;
-            
-            // Clear all existing avatars from the board
-            document.querySelectorAll('.token-container').forEach(el => el.innerHTML = '');
-            
-            // Reposition player avatars based on incoming state data
-            for (const [player, position] of Object.entries(state.positions)) {
-                const tokenContainer = document.getElementById(`tokens-${position}`);
-                if (tokenContainer) {
-                    const pNum = player.split(' ')[1];
-                    const token = document.createElement('span');
-                    token.className = `token p${pNum}`;
-                    token.title = player;
-                    tokenContainer.appendChild(token);
-                }
-            }
-
-            // Update state metrics layout cards
-            document.getElementById('turn-label').innerText = state.current_turn;
-            document.getElementById('dice-value').innerText = data.dice;
-            
-            // Append event updates to the console history list box panel
-            const logBox = document.getElementById('log-box');
-            logBox.innerHTML += `<div class="log-entry">[Match]: ${data.log}</div>`;
-            logBox.scrollTop = logBox.scrollHeight;
-
-            // Enforce turn switching across clients
-            const rollBtn = document.getElementById('roll-button');
-            if (state.current_turn === myIdentity && !state.game_over) {
-                rollBtn.disabled = false;
-            } else {
-                rollBtn.disabled = true;
-            }
-
-            if(state.game_over) {
-                document.getElementById('turn-label').innerText = "Match Concluded!";
-                rollBtn.disabled = true;
-            }
-        }
-    };
-
-    function requestRoll() {
-        socket.send(json.stringify({'action': 'roll_dice'}));
-    }
-    socket.onmessage = function(e) {
-        const data = JSON.parse(e.data);
-        
-        if (data.type === 'init') {
-            myIdentity = data.player_identity;
-            document.getElementById('identity-label').innerText = myIdentity;
-        } 
-        else if (data.type === 'game_update') {
-            const state = data.state;
-            
-            // Clear all existing avatars from the board layout grids
-            document.querySelectorAll('.token-container').forEach(el => el.innerHTML = '');
-            
-            // Reposition player avatars based on incoming state data
-            for (const [player, position] of Object.entries(state.positions)) {
-                const tokenContainer = document.getElementById(`tokens-${position}`);
-                if (tokenContainer) {
-                    const pNum = player.split(' ')[1];
-                    const currentLap = state.laps[player] || 1;
-                    
-                    // Create the token element container
-                    const token = document.createElement('span');
-                    token.className = `token p${pNum}`;
-                    token.title = `${player} (Lap ${currentLap})`;
-                    
-                    // Visual Treatment for Lap 2 items: give it a distinct white core dot
-                    if(currentLap === 2) {
-                        token.style.boxShadow = "0 0 12px #fff, inset 0 0 0 3px #fff";
+        // Web Audio Synthesizer
+        const AudioEngine = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        this.ctx = new AudioContext();
                     }
-                    
-                    tokenContainer.appendChild(token);
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            playHop() {
+                if (!soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(320, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(540, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            },
+            playDice() {
+                if (!soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                for (let i = 0; i < 4; i++) {
+                    setTimeout(() => {
+                        if (!this.ctx) return;
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(160 + Math.random() * 80, this.ctx.currentTime);
+                        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.06);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start();
+                        osc.stop(this.ctx.currentTime + 0.06);
+                    }, i * 60);
+                }
+            },
+            playSnake() {
+                if (!soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(450, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(90, this.ctx.currentTime + 0.55);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.55);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.55);
+            },
+            playLadder() {
+                if (!soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25];
+                notes.forEach((freq, idx) => {
+                    setTimeout(() => {
+                        if (!this.ctx) return;
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                        gain.gain.setValueAtTime(0.16, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start();
+                        osc.stop(this.ctx.currentTime + 0.18);
+                    }, idx * 90);
+                });
+            },
+            playVictory() {
+                if (!soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const fanfare = [392.00, 523.25, 659.25, 783.99];
+                fanfare.forEach((f, i) => {
+                    setTimeout(() => {
+                        if (!this.ctx) return;
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(f, this.ctx.currentTime);
+                        gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start();
+                        osc.stop(this.ctx.currentTime + 0.4);
+                    }, i * 140);
+                });
+            }
+        };
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sound-btn');
+            btn.innerText = soundEnabled ? '🔊' : '🔇';
+            showToast(soundEnabled ? 'Sound Enabled' : 'Sound Muted');
+        }
+
+        // Generate 10x10 Grid
+        function initGrid() {
+            const grid = document.getElementById('grid-board');
+            grid.innerHTML = '';
+
+            for (let rowIdx = 0; rowIdx < 10; rowIdx++) {
+                const rowNum = 9 - rowIdx;
+                const isEvenRow = (rowNum % 2 === 0);
+
+                for (let colIdx = 0; colIdx < 10; colIdx++) {
+                    const tileId = isEvenRow 
+                        ? (rowNum * 10 + (colIdx + 1)) 
+                        : (rowNum * 10 + (10 - colIdx));
+
+                    const cell = document.createElement('div');
+                    cell.className = `cell ${((rowIdx + colIdx) % 2 === 0) ? 'cell-even' : 'cell-odd'}`;
+                    cell.id = `tile-${tileId}`;
+                    cell.setAttribute('data-tile', tileId);
+
+                    let specialHtml = '';
+                    if (tileId === 1) {
+                        cell.classList.add('tile-start');
+                        specialHtml = '<span class="start-badge">START</span>';
+                    } else if (tileId === 100) {
+                        cell.classList.add('tile-win');
+                        specialHtml = '<span class="win-badge">👑 FINISH</span>';
+                    }
+
+                    cell.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; width:100%;">
+                            <span class="cell-num">${tileId}</span>
+                            ${specialHtml}
+                        </div>
+                    `;
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function getTileCoords(tileNum) {
+            const num = Math.min(Math.max(tileNum, 1), 100);
+            const row = Math.floor((num - 1) / 10);
+            const gridRow = 9 - row;
+            const isEvenRow = (row % 2 === 0);
+            const col = isEvenRow ? ((num - 1) % 10) : (9 - ((num - 1) % 10));
+
+            return {
+                x: col * 100 + 50,
+                y: gridRow * 100 + 50
+            };
+        }
+
+        function renderBoardDecorations() {
+            const snakesGroup = document.getElementById('snakes-group');
+            const laddersGroup = document.getElementById('ladders-group');
+            snakesGroup.innerHTML = '';
+            laddersGroup.innerHTML = '';
+
+            // Draw Ladders
+            for (const [baseStr, topStr] of Object.entries(laddersMap)) {
+                const base = parseInt(baseStr);
+                const top = parseInt(topStr);
+                const pBase = getTileCoords(base);
+                const pTop = getTileCoords(top);
+
+                const baseCell = document.getElementById(`tile-${base}`);
+                if (baseCell) {
+                    baseCell.classList.add('ladder-base');
+                    baseCell.setAttribute('data-dest', top);
+                }
+
+                const dx = pTop.x - pBase.x;
+                const dy = pTop.y - pBase.y;
+                const dist = Math.hypot(dx, dy);
+                const ux = -dy / dist;
+                const uy = dx / dist;
+                const railOffset = 14;
+
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.id = `ladder-${base}-${top}`;
+
+                const rail1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                rail1.setAttribute('x1', pBase.x - ux * railOffset);
+                rail1.setAttribute('y1', pBase.y - uy * railOffset);
+                rail1.setAttribute('x2', pTop.x - ux * railOffset);
+                rail1.setAttribute('y2', pTop.y - uy * railOffset);
+                rail1.setAttribute('stroke', 'url(#ladderGrad)');
+                rail1.setAttribute('class', 'ladder-rail');
+
+                const rail2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                rail2.setAttribute('x1', pBase.x + ux * railOffset);
+                rail2.setAttribute('y1', pBase.y + uy * railOffset);
+                rail2.setAttribute('x2', pTop.x + ux * railOffset);
+                rail2.setAttribute('y2', pTop.y + uy * railOffset);
+                rail2.setAttribute('stroke', 'url(#ladderGrad)');
+                rail2.setAttribute('class', 'ladder-rail');
+
+                g.appendChild(rail1);
+                g.appendChild(rail2);
+
+                const rungsCount = Math.max(3, Math.floor(dist / 40));
+                for (let r = 1; r <= rungsCount; r++) {
+                    const t = r / (rungsCount + 1);
+                    const rx = pBase.x + dx * t;
+                    const ry = pBase.y + dy * t;
+                    const rung = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    rung.setAttribute('x1', rx - ux * railOffset);
+                    rung.setAttribute('y1', ry - uy * railOffset);
+                    rung.setAttribute('x2', rx + ux * railOffset);
+                    rung.setAttribute('y2', ry + uy * railOffset);
+                    rung.setAttribute('stroke', 'url(#ladderGrad)');
+                    rung.setAttribute('class', 'ladder-rung');
+                    g.appendChild(rung);
+                }
+
+                laddersGroup.appendChild(g);
+            }
+
+            // Draw Snakes
+            const snakeGrads = ['url(#snakeGrad1)', 'url(#snakeGrad2)', 'url(#snakeGrad3)'];
+            let sIdx = 0;
+            for (const [headStr, tailStr] of Object.entries(snakesMap)) {
+                const head = parseInt(headStr);
+                const tail = parseInt(tailStr);
+                const pHead = getTileCoords(head);
+                const pTail = getTileCoords(tail);
+
+                const headCell = document.getElementById(`tile-${head}`);
+                if (headCell) {
+                    headCell.classList.add('snake-head');
+                    headCell.setAttribute('data-dest', tail);
+                }
+
+                const dx = pTail.x - pHead.x;
+                const dy = pTail.y - pHead.y;
+                const dist = Math.hypot(dx, dy);
+                const waveAmp = Math.min(45, dist * 0.16) * (sIdx % 2 === 0 ? 1 : -1);
+                const ux = -dy / dist;
+                const uy = dx / dist;
+
+                const cp1x = pHead.x + dx * 0.33 + ux * waveAmp;
+                const cp1y = pHead.y + dy * 0.33 + uy * waveAmp;
+                const cp2x = pHead.x + dx * 0.66 - ux * waveAmp;
+                const cp2y = pHead.y + dy * 0.66 - uy * waveAmp;
+
+                const pathData = `M ${pHead.x} ${pHead.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${pTail.x} ${pTail.y}`;
+
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.id = `snake-${head}-${tail}`;
+
+                const shadow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                shadow.setAttribute('d', pathData);
+                shadow.setAttribute('class', 'snake-path snake-shadow');
+
+                const body = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                body.setAttribute('d', pathData);
+                body.setAttribute('stroke', snakeGrads[sIdx % snakeGrads.length]);
+                body.setAttribute('class', 'snake-path snake-body');
+
+                const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                pattern.setAttribute('d', pathData);
+                pattern.setAttribute('class', 'snake-path snake-pattern');
+
+                const headCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                headCircle.setAttribute('cx', pHead.x);
+                headCircle.setAttribute('cy', pHead.y);
+                headCircle.setAttribute('r', '14');
+                headCircle.setAttribute('fill', '#ef4444');
+                headCircle.setAttribute('stroke', '#ffffff');
+                headCircle.setAttribute('stroke-width', '2');
+
+                const eye1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                eye1.setAttribute('cx', pHead.x - 4);
+                eye1.setAttribute('cy', pHead.y - 3);
+                eye1.setAttribute('r', '2.5');
+                eye1.setAttribute('fill', '#facc15');
+
+                const eye2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                eye2.setAttribute('cx', pHead.x + 4);
+                eye2.setAttribute('cy', pHead.y - 3);
+                eye2.setAttribute('r', '2.5');
+                eye2.setAttribute('fill', '#facc15');
+
+                g.appendChild(shadow);
+                g.appendChild(body);
+                g.appendChild(pattern);
+                g.appendChild(headCircle);
+                g.appendChild(eye1);
+                g.appendChild(eye2);
+
+                snakesGroup.appendChild(g);
+                sIdx++;
+            }
+        }
+
+        // Render & Reposition Player Tokens
+        function renderTokens(players) {
+            const container = document.getElementById('tokens-layer');
+            const wrapper = document.getElementById('board-wrapper');
+            const wrapperWidth = wrapper.clientWidth;
+            const scale = wrapperWidth / 1000;
+
+            const activeIds = new Set(players.map(p => `token-${p.id}`));
+            // Remove disconnected player tokens
+            document.querySelectorAll('.player-token').forEach(el => {
+                if (!activeIds.has(el.id)) el.remove();
+            });
+
+            // Group players by position
+            const posMap = {};
+            players.forEach(p => {
+                if (!posMap[p.position]) posMap[p.position] = [];
+                posMap[p.position].push(p);
+            });
+
+            players.forEach(player => {
+                let token = document.getElementById(`token-${player.id}`);
+                if (!token) {
+                    token = document.createElement('div');
+                    token.id = `token-${player.id}`;
+                    token.className = 'player-token';
+                    token.innerHTML = player.avatar || '🦊';
+                    container.appendChild(token);
+                }
+
+                token.style.background = player.color || '#ef4444';
+
+                const pList = posMap[player.position] || [player];
+                const pIdx = pList.findIndex(x => x.id === player.id);
+                const coords = getTileCoords(player.position);
+
+                let offsetX = 0;
+                let offsetY = 0;
+                if (pList.length > 1) {
+                    const angle = (pIdx / pList.length) * 2 * Math.PI;
+                    offsetX = Math.cos(angle) * 16;
+                    offsetY = Math.sin(angle) * 16;
+                }
+
+                const px = (coords.x + offsetX) * scale;
+                const py = (coords.y + offsetY) * scale;
+
+                token.style.left = `${px}px`;
+                token.style.top = `${py}px`;
+            });
+        }
+
+        // Animate Step-by-Step Movement across all connected laptops
+        async function animatePlayerMove(eventData) {
+            const { player_id, start_pos, intermediate_pos, final_pos, move_type, dice } = eventData;
+            const token = document.getElementById(`token-${player_id}`);
+            const wrapper = document.getElementById('board-wrapper');
+            const scale = wrapper.clientWidth / 1000;
+
+            // 1. Animate 3D Dice Roll
+            animate3DDice(dice);
+            AudioEngine.playDice();
+
+            await new Promise(r => setTimeout(r, 700));
+
+            // 2. Step-by-Step Hop
+            if (token && intermediate_pos > start_pos) {
+                for (let step = start_pos + 1; step <= intermediate_pos; step++) {
+                    const coords = getTileCoords(step);
+                    token.classList.add('hopping');
+                    token.style.left = `${coords.x * scale}px`;
+                    token.style.top = `${coords.y * scale}px`;
+                    AudioEngine.playHop();
+                    await new Promise(r => setTimeout(r, 180));
+                    token.classList.remove('hopping');
                 }
             }
 
-            // Update panel metrics cards layout values
-            document.getElementById('turn-label').innerText = state.current_turn;
-            document.getElementById('dice-value').innerText = data.dice;
-            
-            // Append history string logs
-            const logBox = document.getElementById('log-box');
-            logBox.innerHTML += `<div class="log-entry">[Match]: ${data.log}</div>`;
-            logBox.scrollTop = logBox.scrollHeight;
+            // 3. Snake / Ladder Interaction
+            if (move_type === 'snake') {
+                await new Promise(r => setTimeout(r, 350));
+                AudioEngine.playSnake();
 
-            // Turn switching controls enforcement
-            const rollBtn = document.getElementById('roll-button');
-            if (state.current_turn === myIdentity && !state.game_over) {
-                rollBtn.disabled = false;
-            } else {
-                rollBtn.disabled = true;
+                const snakeElem = document.getElementById(`snake-${intermediate_pos}-${final_pos}`);
+                if (snakeElem) snakeElem.classList.add('snake-active');
+
+                if (token) {
+                    token.classList.add('sliding');
+                    const targetCoords = getTileCoords(final_pos);
+                    token.style.left = `${targetCoords.x * scale}px`;
+                    token.style.top = `${targetCoords.y * scale}px`;
+                }
+
+                await new Promise(r => setTimeout(r, 750));
+                if (snakeElem) snakeElem.classList.remove('snake-active');
+                if (token) token.classList.remove('sliding');
+
+            } else if (move_type === 'ladder') {
+                await new Promise(r => setTimeout(r, 350));
+                AudioEngine.playLadder();
+
+                const ladderElem = document.getElementById(`ladder-${intermediate_pos}-${final_pos}`);
+                if (ladderElem) ladderElem.classList.add('ladder-active');
+
+                if (token) {
+                    token.classList.add('climbing');
+                    const targetCoords = getTileCoords(final_pos);
+                    token.style.left = `${targetCoords.x * scale}px`;
+                    token.style.top = `${targetCoords.y * scale}px`;
+                }
+
+                await new Promise(r => setTimeout(r, 750));
+                if (ladderElem) ladderElem.classList.remove('ladder-active');
+                if (token) token.classList.remove('climbing');
+
+            } else if (move_type === 'win') {
+                triggerVictory(eventData.player_name);
             }
 
-            if(state.game_over) {
-                document.getElementById('turn-label').innerText = "Match Concluded!";
-                rollBtn.disabled = true;
+            if (eventData.state && eventData.state.players) {
+                renderTokens(eventData.state.players);
             }
         }
-    };
-</script>
+
+        function animate3DDice(value) {
+            const cube = document.getElementById('cube-dice');
+            cube.classList.add('rolling');
+
+            setTimeout(() => {
+                cube.classList.remove('rolling');
+                const rotations = {
+                    1: 'rotateY(0deg) rotateX(0deg)',
+                    2: 'rotateY(-90deg) rotateX(0deg)',
+                    3: 'rotateY(-180deg) rotateX(0deg)',
+                    4: 'rotateY(90deg) rotateX(0deg)',
+                    5: 'rotateX(-90deg) rotateY(0deg)',
+                    6: 'rotateX(90deg) rotateY(0deg)'
+                };
+                cube.style.transform = rotations[value] || rotations[1];
+            }, 550);
+        }
+
+        // UI State Update for All Connected Players
+        function updateUIState(state) {
+            currentRoomState = state;
+
+            // 1. Lobby Overlay vs Active Game Screen
+            const lobbyOverlay = document.getElementById('lobby-overlay');
+            if (state.status === 'waiting') {
+                lobbyOverlay.classList.remove('hidden');
+                updateLobbySlots(state.players, state.target_players || 2);
+
+                const hostControls = document.getElementById('lobby-host-controls');
+                const guestControls = document.getElementById('lobby-guest-controls');
+                const hostCapBar = document.getElementById('host-capacity-bar');
+
+                if (isHost) {
+                    hostControls.style.display = 'flex';
+                    guestControls.style.display = 'none';
+                    hostCapBar.style.display = 'flex';
+
+                    // Highlight active capacity button
+                    [2, 3, 4].forEach(c => {
+                        const btn = document.getElementById(`cap-btn-${c}`);
+                        if (btn) btn.classList.toggle('active', (state.target_players || 2) === c);
+                    });
+                } else {
+                    hostControls.style.display = 'none';
+                    guestControls.style.display = 'block';
+                    hostCapBar.style.display = 'none';
+                }
+
+                // Update my selected color in mini swatch
+                const myPlayer = state.players.find(p => p.id === myId);
+                if (myPlayer) {
+                    myChosenColor = myPlayer.color;
+                    document.querySelectorAll('.mini-swatch').forEach(sw => {
+                        sw.classList.toggle('active', sw.getAttribute('data-color') === myChosenColor);
+                    });
+                }
+            } else {
+                lobbyOverlay.classList.add('hidden');
+            }
+
+            // 2. Scoreboard List
+            const playersList = document.getElementById('players-list');
+            playersList.innerHTML = '';
+            document.getElementById('player-count-tag').innerText = `${state.players.length}/${state.target_players || 4}`;
+
+            state.players.forEach(p => {
+                const isCurrent = (p.id === state.current_turn_id);
+                const row = document.createElement('div');
+                row.className = `player-row ${isCurrent ? 'active-turn' : ''}`;
+                row.innerHTML = `
+                    <div class="player-left">
+                        <div class="player-color-dot" style="background:${p.color}"></div>
+                        <span style="font-size:1.3rem;">${p.avatar}</span>
+                        <div>
+                            <div class="player-name-text" style="color:${p.color}">${p.name} ${p.is_bot ? '🤖' : ''} ${p.is_host ? '👑' : ''}</div>
+                            <div style="font-size:0.75rem; color:#64748b;">${p.id === myId ? '(You)' : ''}</div>
+                        </div>
+                    </div>
+                    <div class="player-pos-badge" style="color:${p.color}; border: 1px solid ${p.color}40;">Tile ${p.position}</div>
+                `;
+                playersList.appendChild(row);
+            });
+
+            // 3. Current Turn Card & Roll Button
+            const turnCard = document.getElementById('turn-card');
+            const turnName = document.getElementById('turn-name');
+            const turnAvatar = document.getElementById('turn-avatar');
+            const rollBtn = document.getElementById('roll-btn');
+
+            turnName.innerText = state.current_turn_name || "Waiting...";
+            const activePlayer = state.players.find(p => p.id === state.current_turn_id);
+            if (activePlayer) {
+                turnAvatar.innerText = activePlayer.avatar;
+                turnAvatar.style.borderColor = activePlayer.color;
+            }
+
+            const isMyTurn = (state.status === 'playing' && state.current_turn_id === myId);
+            if (isMyTurn) {
+                turnCard.classList.add('my-turn');
+                rollBtn.disabled = false;
+                rollBtn.classList.add('pulse');
+                rollBtn.innerText = "🎲 YOUR TURN - ROLL!";
+            } else {
+                turnCard.classList.remove('my-turn');
+                rollBtn.disabled = true;
+                rollBtn.classList.remove('pulse');
+                rollBtn.innerText = state.status === 'playing' 
+                    ? `Waiting for ${state.current_turn_name}...` 
+                    : "🎲 ROLL DICE";
+            }
+
+            renderTokens(state.players);
+
+            if (state.status === 'finished' && state.winner) {
+                triggerVictory(state.winner);
+            }
+        }
+
+        // Update Lobby Slots Modal based on target_players (2, 3, or 4)
+        function updateLobbySlots(players, targetCount) {
+            const grid = document.getElementById('lobby-slots-grid');
+            grid.innerHTML = '';
+            const totalSlots = Math.max(targetCount, players.length);
+
+            for (let i = 0; i < totalSlots; i++) {
+                const slot = document.createElement('div');
+                if (i < players.length) {
+                    const p = players[i];
+                    slot.className = 'lobby-slot occupied';
+                    slot.innerHTML = `
+                        <div class="slot-avatar">${p.avatar}</div>
+                        <div class="slot-name" style="color:${p.color}">${p.name} ${p.id === myId ? '(You)' : ''}</div>
+                        <span class="slot-tag ${p.is_host ? 'host' : ''}">
+                            ${p.is_host ? '👑 Host' : (p.is_bot ? '🤖 AI Bot' : 'Ready')}
+                        </span>
+                    `;
+                } else {
+                    slot.className = 'lobby-slot';
+                    slot.innerHTML = `
+                        <div style="font-size:1.6rem; color:#475569;">➕</div>
+                        <div style="color:#64748b; font-size:0.85rem; font-weight:600;">Waiting Player ${i + 1}</div>
+                    `;
+                }
+                grid.appendChild(slot);
+            }
+        }
+
+        function addLog(message, isHighlight = false) {
+            const logBox = document.getElementById('log-panel');
+            const entry = document.createElement('div');
+            entry.className = `log-item ${isHighlight ? 'highlight' : ''}`;
+            entry.innerText = message;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function triggerVictory(winnerName) {
+            AudioEngine.playVictory();
+            const modal = document.getElementById('victory-modal');
+            document.getElementById('winner-name-text').innerText = `🎉 ${winnerName} has conquered the Arena! 🏆`;
+            modal.classList.add('show');
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        // WebSocket Event Listeners
+        socket.onopen = function() {
+            socket.send(JSON.stringify({
+                action: 'join',
+                name: myName,
+                avatar: myAvatar,
+                color: myChosenColor,
+                target: myTarget,
+                mode: myMode
+            }));
+        };
+
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+
+            if (data.type === 'init') {
+                myId = data.my_id;
+                isHost = data.is_host;
+                snakesMap = data.snakes;
+                laddersMap = data.ladders;
+                initGrid();
+                renderBoardDecorations();
+                updateUIState(data.state);
+            } 
+            else if (data.type === 'state_event') {
+                updateUIState(data.state);
+                if (data.log) addLog(data.log);
+            } 
+            else if (data.type === 'move_event') {
+                addLog(data.log, true);
+                animatePlayerMove(data);
+                updateUIState(data.state);
+            } 
+            else if (data.type === 'reaction_event') {
+                showFloatingReaction(data.emoji, data.sender_name);
+                addLog(`${data.sender_name} reacted ${data.emoji}`);
+            }
+        };
+
+        // Actions
+        function requestRoll() {
+            document.getElementById('roll-btn').disabled = true;
+            socket.send(JSON.stringify({ action: 'roll_dice' }));
+        }
+
+        function startGame() {
+            socket.send(JSON.stringify({ action: 'start_game' }));
+        }
+
+        function addBot() {
+            socket.send(JSON.stringify({ action: 'add_bot' }));
+        }
+
+        function removeBot() {
+            socket.send(JSON.stringify({ action: 'remove_bot' }));
+        }
+
+        function setTargetPlayers(count) {
+            socket.send(JSON.stringify({
+                action: 'set_target_players',
+                target: count
+            }));
+        }
+
+        function changeMyColor(colorHex) {
+            myChosenColor = colorHex;
+            socket.send(JSON.stringify({
+                action: 'change_color',
+                color: colorHex
+            }));
+        }
+
+        function restartGame() {
+            document.getElementById('victory-modal').classList.remove('show');
+            socket.send(JSON.stringify({ action: 'restart_game' }));
+        }
+
+        function sendReaction(emoji) {
+            socket.send(JSON.stringify({
+                action: 'send_reaction',
+                emoji: emoji
+            }));
+        }
+
+        function showFloatingReaction(emoji, senderName) {
+            const wrapper = document.getElementById('board-wrapper');
+            const reaction = document.createElement('div');
+            reaction.className = 'floating-reaction';
+            reaction.innerText = emoji;
+            reaction.style.left = '50%';
+            reaction.style.top = '50%';
+            wrapper.appendChild(reaction);
+            setTimeout(() => reaction.remove(), 1600);
+        }
+
+        function copyRoomCode() {
+            navigator.clipboard.writeText(roomCode);
+            showToast(`Room Code "${roomCode}" Copied!`);
+        }
+
+        function copyInviteLink() {
+            navigator.clipboard.writeText(window.location.href);
+            showToast("Invite Link Copied to Clipboard! 🔗");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-msg');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2200);
+        }
+
+        window.addEventListener('resize', () => {
+            if (currentRoomState && currentRoomState.players) {
+                renderTokens(currentRoomState.players);
+            }
+        });
+    </script>
 </body>
 </html>
