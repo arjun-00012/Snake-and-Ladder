@@ -559,14 +559,49 @@
             line-height: 1.45;
         }
 
+        /* TABLETS (601px - 1024px) */
+        @media (min-width: 601px) and (max-width: 1024px) {
+            body { padding: 32px 20px 48px; }
+            .container { max-width: 620px; }
+            .main-title { font-size: 2.4rem; }
+            .protocol-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        }
+
+        /* MOBILE SCREENS (<= 600px) */
         @media (max-width: 600px) {
-            body { padding: 24px 14px 40px; }
-            .main-title { font-size: 2.1rem; }
-            .main-card { padding: 22px 18px; }
-            .protocol-grid { grid-template-columns: 1fr; }
-            .mode-cards-grid { grid-template-columns: 1fr; }
-            .avatar-grid { grid-template-columns: repeat(3, 1fr); }
-            .colors-row { grid-template-columns: repeat(3, 1fr); }
+            body { padding: 18px 12px 36px; }
+            .container { max-width: 100%; }
+            .crest-emblem { width: 44px; height: 44px; font-size: 1.3rem; margin-bottom: 8px; border-radius: 12px; }
+            .prestige-badge { font-size: 0.68rem; padding: 4px 12px; letter-spacing: 1px; margin-bottom: 8px; }
+            .main-title { font-size: clamp(1.65rem, 7.5vw, 2.2rem); letter-spacing: 1px; margin-bottom: 6px; }
+            .subtitle { font-size: 0.85rem; }
+            .header { margin-bottom: 20px; }
+            .tabs-nav { padding: 4px; gap: 4px; border-radius: 14px; margin-bottom: 16px; }
+            .tab-btn { padding: 11px 8px; font-size: 0.84rem; gap: 6px; border-radius: 10px; }
+            .main-card { padding: 20px 14px; border-radius: 18px; margin-bottom: 20px; }
+            .name-row { gap: 8px; }
+            .text-input { padding: 11px 14px; font-size: 0.92rem; border-radius: 10px; }
+            .btn-dice-random { padding: 0 14px; font-size: 1.05rem; border-radius: 10px; }
+            .avatar-grid { grid-template-columns: repeat(6, 1fr); gap: 6px; }
+            .avatar-option { font-size: 1.25rem; padding: 8px 0; border-radius: 10px; }
+            .colors-row { grid-template-columns: repeat(6, 1fr); gap: 6px; }
+            .color-swatch { height: 34px; border-radius: 8px; }
+            .players-count-group { gap: 6px; margin-bottom: 18px; }
+            .player-count-btn { padding: 10px 6px; font-size: 0.82rem; border-radius: 10px; }
+            .btn-formal { padding: 14px 18px; font-size: 0.98rem; border-radius: 12px; }
+            .protocol-card { padding: 18px 14px; border-radius: 18px; }
+            .protocol-title { font-size: 1.08rem; }
+            .protocol-grid { grid-template-columns: 1fr; gap: 8px; }
+            .protocol-item { padding: 10px 12px; border-radius: 10px; }
+        }
+
+        /* EXTRA SMALL MOBILE SCREENS (<= 380px) */
+        @media (max-width: 380px) {
+            body { padding: 12px 8px 28px; }
+            .tab-btn { font-size: 0.78rem; padding: 9px 4px; }
+            .avatar-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+            .colors-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+            .join-code-input { font-size: 1.15rem; letter-spacing: 2px; }
         }
     </style>
 </head>
