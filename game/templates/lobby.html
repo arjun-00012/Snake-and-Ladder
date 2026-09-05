@@ -3,24 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snakes & Ladders - Realtime Multiplayer Arena</title>
+    <title>Snakes & Ladders — Executive Multiplayer Arena</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #090d16;
-            --bg-card: rgba(18, 24, 38, 0.88);
-            --bg-card-sub: rgba(15, 23, 42, 0.7);
-            --border: rgba(255, 255, 255, 0.08);
-            --border-highlight: rgba(56, 189, 248, 0.4);
-            --accent-blue: #38bdf8;
-            --accent-emerald: #10b981;
-            --accent-amber: #f59e0b;
-            --accent-rose: #f43f5e;
-            --accent-purple: #a855f7;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --bg-void: #070a12;
+            --bg-card: rgba(14, 20, 36, 0.82);
+            --bg-card-sub: rgba(11, 16, 30, 0.72);
+            --border-dim: rgba(255, 255, 255, 0.08);
+            --border-medium: rgba(255, 255, 255, 0.14);
+            --border-gold: rgba(212, 175, 55, 0.38);
+            --gold-primary: #d4af37;
+            --gold-light: #f3d477;
+            --gold-glow: rgba(212, 175, 55, 0.22);
+            --navy-royal: #1e3a8a;
+            --navy-bright: #2563eb;
+            --navy-glow: rgba(37, 99, 235, 0.28);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --emerald-formal: #059669;
+            --crimson-formal: #9f1239;
         }
 
         * {
@@ -31,40 +36,58 @@
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-main);
+            background: var(--bg-void);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 32px 16px;
+            padding: 40px 20px 60px;
             overflow-x: hidden;
             position: relative;
         }
 
-        /* Ambient Background Glow */
-        .bg-glow-1 {
+        /* Ambient Background Canvas for Kinetic Particle Mesh */
+        #ambient-canvas {
             position: fixed;
-            top: 5%;
-            left: 10%;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
-            filter: blur(80px);
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             z-index: 0;
             pointer-events: none;
         }
 
-        .bg-glow-2 {
+        /* Subtle Radial Ambient Depth */
+        .ambient-glow-top {
             position: fixed;
-            bottom: 5%;
-            right: 10%;
-            width: 550px;
+            top: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
             height: 550px;
-            background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);
+            background: radial-gradient(ellipse at center, rgba(30, 58, 138, 0.22) 0%, rgba(212, 175, 55, 0.06) 45%, transparent 70%);
+            filter: blur(80px);
+            z-index: 0;
+            pointer-events: none;
+            animation: breatheGlow 10s ease-in-out infinite alternate;
+        }
+
+        .ambient-glow-bottom {
+            position: fixed;
+            bottom: -150px;
+            right: 10%;
+            width: 650px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(15, 23, 42, 0.4) 0%, transparent 70%);
             filter: blur(90px);
             z-index: 0;
             pointer-events: none;
+        }
+
+        @keyframes breatheGlow {
+            0% { transform: translateX(-50%) scale(1); opacity: 0.8; }
+            100% { transform: translateX(-50%) scale(1.1); opacity: 1; }
         }
 
         .container {
@@ -74,105 +97,167 @@
             width: 100%;
         }
 
+        /* Header Presentation */
         .header {
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
-        .logo-badge {
+        .crest-emblem {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(30, 58, 138, 0.3));
+            border: 1px solid var(--border-gold);
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            margin-bottom: 14px;
+            font-size: 1.6rem;
+            animation: crestFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes crestFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .prestige-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 16px;
-            background: rgba(56, 189, 248, 0.12);
-            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 5px 16px;
+            background: rgba(212, 175, 55, 0.08);
+            border: 1px solid rgba(212, 175, 55, 0.25);
             border-radius: 9999px;
-            font-size: 0.82rem;
+            font-size: 0.76rem;
             font-weight: 700;
-            color: var(--accent-blue);
-            margin-bottom: 12px;
-            letter-spacing: 0.75px;
+            color: var(--gold-primary);
+            letter-spacing: 1.5px;
             text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .prestige-badge .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--gold-primary);
+            box-shadow: 0 0 8px var(--gold-primary);
+            animation: pulseDot 2s infinite;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 0.5; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.2); }
         }
 
         .main-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 3rem;
-            font-weight: 900;
-            line-height: 1.1;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #ffffff 30%, #38bdf8 70%, #a855f7 100%);
+            font-family: 'Cinzel', serif;
+            font-size: 2.75rem;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #ffffff 25%, #f1f5f9 55%, #d4af37 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 8px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
         .subtitle {
-            color: var(--text-muted);
-            font-size: 1.05rem;
+            color: var(--text-secondary);
+            font-size: 0.96rem;
             font-weight: 500;
+            letter-spacing: 0.4px;
         }
 
-        /* Tabs Navigation */
+        /* Executive Tabs Navigation */
         .tabs-nav {
             display: flex;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid var(--border);
+            background: rgba(11, 16, 30, 0.85);
+            border: 1px solid var(--border-medium);
             border-radius: 16px;
-            padding: 6px;
-            margin-bottom: 20px;
+            padding: 5px;
+            margin-bottom: 22px;
             gap: 6px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
         }
 
         .tab-btn {
             flex: 1;
-            padding: 12px;
+            padding: 13px 18px;
             background: transparent;
             border: none;
             color: var(--text-muted);
-            font-family: 'Outfit', sans-serif;
-            font-size: 1rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.94rem;
             font-weight: 700;
+            letter-spacing: 0.5px;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 9px;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
         }
 
         .tab-btn.active {
-            background: linear-gradient(135deg, #2563eb, #38bdf8);
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.9), rgba(37, 99, 235, 0.9));
             color: #ffffff;
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 4px 18px rgba(37, 99, 235, 0.35);
         }
 
-        /* Glassmorphism Main Card */
+        /* Executive Card Container */
         .main-card {
             background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-medium);
             border-radius: 24px;
-            padding: 28px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            padding: 32px 30px;
+            box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
             margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle metallic top hairline */
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 15%;
+            right: 15%;
+            height: 1.5px;
+            background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+            opacity: 0.7;
         }
 
         .section-label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.76rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.75px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 9px;
         }
 
         .input-group {
-            margin-bottom: 18px;
+            margin-bottom: 20px;
         }
 
+        /* Formal Name Input Field */
         .name-row {
             display: flex;
             gap: 10px;
@@ -180,12 +265,12 @@
 
         .text-input {
             flex: 1;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: var(--text-main);
-            padding: 13px 16px;
+            background: rgba(8, 12, 22, 0.85);
+            border: 1px solid var(--border-medium);
+            color: var(--text-primary);
+            padding: 13px 18px;
             border-radius: 12px;
-            font-size: 1rem;
+            font-size: 0.98rem;
             font-family: inherit;
             font-weight: 600;
             outline: none;
@@ -193,271 +278,338 @@
         }
 
         .text-input:focus {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
-            background: rgba(15, 23, 42, 1);
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+            background: rgba(10, 15, 28, 0.95);
         }
 
         .btn-dice-random {
-            background: rgba(56, 189, 248, 0.15);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            color: var(--accent-blue);
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--border-gold);
+            color: var(--gold-primary);
             padding: 0 16px;
             border-radius: 12px;
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .btn-dice-random:hover {
-            background: rgba(56, 189, 248, 0.25);
-            transform: rotate(30deg) scale(1.05);
+            background: rgba(212, 175, 55, 0.2);
+            transform: rotate(45deg) scale(1.05);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.25);
         }
 
-        /* Avatar Picker */
+        /* Heraldic Crest Avatar Selection */
         .avatar-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
-            gap: 8px;
+            gap: 9px;
         }
 
         .avatar-option {
-            background: rgba(15, 23, 42, 0.6);
-            border: 2px solid transparent;
+            background: rgba(10, 15, 28, 0.7);
+            border: 1.5px solid var(--border-dim);
             border-radius: 12px;
-            padding: 8px 0;
-            font-size: 1.5rem;
+            padding: 10px 0;
+            font-size: 1.45rem;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .avatar-option:hover {
             transform: translateY(-2px);
-            background: rgba(30, 41, 59, 0.8);
+            background: rgba(22, 32, 54, 0.8);
+            border-color: var(--border-medium);
         }
 
         .avatar-option.active {
-            border-color: var(--accent-blue);
-            background: rgba(56, 189, 248, 0.15);
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
-            transform: scale(1.08);
+            border-color: var(--gold-primary);
+            background: rgba(212, 175, 55, 0.14);
+            box-shadow: 0 0 16px rgba(212, 175, 55, 0.28);
+            transform: scale(1.06);
         }
 
-        /* Color Selection Swatches */
+        /* Formal Executive Color Swatches */
         .colors-row {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
-            gap: 8px;
+            gap: 9px;
         }
 
         .color-swatch {
             height: 38px;
             border-radius: 10px;
-            border: 2.5px solid transparent;
+            border: 2px solid transparent;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 3px 8px rgba(0, 0, 0, 0.4);
         }
 
         .color-swatch:hover {
-            transform: translateY(-2px) scale(1.05);
+            transform: translateY(-2px) scale(1.04);
         }
 
         .color-swatch.active {
             border-color: #ffffff;
-            box-shadow: 0 0 15px currentColor;
-            transform: scale(1.12);
+            box-shadow: 0 0 16px currentColor, inset 0 1px 1px rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
         }
 
         .color-swatch.active::after {
             content: '✓';
             color: white;
-            font-weight: 900;
-            font-size: 1rem;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-        }
-
-        /* Target Players Selector */
-        .players-count-group {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-
-        .player-count-btn {
-            padding: 12px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1.5px solid var(--border);
-            color: var(--text-main);
-            border-radius: 12px;
-            font-weight: 700;
+            font-weight: 800;
             font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
         }
 
-        .player-count-btn:hover {
-            background: rgba(30, 41, 59, 0.8);
-        }
-
-        .player-count-btn.active {
-            border-color: var(--accent-emerald);
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--accent-emerald);
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
-        }
-
-        /* Mode Selector Radio Cards */
+        /* Formal Game Mode Cards */
         .mode-cards-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
+            gap: 10px;
             margin-bottom: 20px;
         }
 
         .mode-card {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            padding: 12px 8px;
+            background: rgba(10, 15, 28, 0.7);
+            border: 1px solid var(--border-medium);
+            border-radius: 14px;
+            padding: 14px 10px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.22s ease;
         }
 
         .mode-card:hover {
-            background: rgba(30, 41, 59, 0.8);
+            background: rgba(22, 32, 54, 0.85);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
         }
 
         .mode-card.active {
-            border-color: var(--accent-blue);
-            background: rgba(56, 189, 248, 0.12);
-            color: var(--accent-blue);
+            border-color: var(--gold-primary);
+            background: rgba(212, 175, 55, 0.1);
+            box-shadow: 0 4px 18px rgba(212, 175, 55, 0.18);
         }
 
         .mode-icon {
             font-size: 1.4rem;
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
 
         .mode-title {
-            font-size: 0.82rem;
+            font-size: 0.84rem;
             font-weight: 700;
+            letter-spacing: 0.3px;
         }
 
-        /* Action Buttons */
-        .btn-primary {
-            width: 100%;
-            padding: 16px 20px;
-            background: linear-gradient(135deg, #059669, #10b981);
-            color: #ffffff;
-            border: none;
-            border-radius: 14px;
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.15rem;
-            font-weight: 800;
-            letter-spacing: 0.3px;
+        .mode-card.active .mode-title {
+            color: var(--gold-light);
+        }
+
+        /* Player Capacity Selector */
+        .players-count-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 9px;
+            margin-bottom: 24px;
+        }
+
+        .player-count-btn {
+            padding: 13px;
+            background: rgba(10, 15, 28, 0.7);
+            border: 1px solid var(--border-medium);
+            color: var(--text-primary);
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.92rem;
             cursor: pointer;
-            box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.5);
-            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.2s ease;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
+
+        .player-count-btn:hover {
+            background: rgba(22, 32, 54, 0.85);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .player-count-btn.active {
+            border-color: var(--gold-primary);
+            background: rgba(212, 175, 55, 0.14);
+            color: var(--gold-light);
+            box-shadow: 0 0 16px rgba(212, 175, 55, 0.22);
+        }
+
+        /* Primary Action Buttons */
+        .btn-formal {
+            width: 100%;
+            padding: 16px 22px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 14px;
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px -4px rgba(29, 78, 216, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .btn-primary:hover {
+        /* Refined Metallic Shimmer Sweep */
+        .btn-formal::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 80%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transform: skewX(-20deg);
+            transition: all 0.75s ease;
+        }
+
+        .btn-formal:hover::after {
+            left: 140%;
+        }
+
+        .btn-formal:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 25px -4px rgba(16, 185, 129, 0.65);
-            filter: brightness(1.08);
+            box-shadow: 0 14px 30px -4px rgba(29, 78, 216, 0.65);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
-        .btn-blue {
-            background: linear-gradient(135deg, #2563eb, #38bdf8);
-            box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.5);
+        .btn-formal:active {
+            transform: translateY(0);
         }
-        .btn-blue:hover {
-            box-shadow: 0 12px 25px -4px rgba(37, 99, 235, 0.65);
+
+        .btn-formal-gold {
+            background: linear-gradient(135deg, #854d0e 0%, #b45309 50%, #d4af37 100%);
+            box-shadow: 0 10px 25px -4px rgba(180, 83, 9, 0.45);
+        }
+
+        .btn-formal-gold:hover {
+            box-shadow: 0 14px 30px -4px rgba(180, 83, 9, 0.6);
         }
 
         .join-code-input {
             text-transform: uppercase;
             text-align: center;
-            letter-spacing: 3px;
-            font-family: 'Outfit', monospace;
+            letter-spacing: 4px;
+            font-family: 'Cinzel', monospace;
             font-weight: 800;
-            font-size: 1.3rem;
-            color: var(--accent-amber);
+            font-size: 1.35rem;
+            color: var(--gold-light);
+            background: rgba(10, 15, 28, 0.95);
+            border: 1.5px solid var(--border-gold);
         }
 
-        /* TERMS & RULES SECTION */
-        .terms-card {
+        .join-code-input:focus {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+        }
+
+        /* PROTOCOL & RULES OF ENGAGEMENT CARD */
+        .protocol-card {
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-medium);
             border-radius: 24px;
-            padding: 24px 28px;
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+            padding: 26px 30px;
+            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6);
+            position: relative;
         }
 
-        .terms-header {
+        .protocol-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20%;
+            right: 20%;
+            height: 1.5px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+        }
+
+        .protocol-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
+            gap: 12px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-dim);
+            padding-bottom: 14px;
         }
 
-        .terms-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--accent-blue);
+        .protocol-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--gold-primary);
         }
 
-        .terms-grid {
+        .protocol-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
+            gap: 12px;
         }
 
-        .rule-item {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 12px 14px;
+        .protocol-item {
+            background: rgba(9, 13, 24, 0.7);
+            border: 1px solid var(--border-dim);
+            border-radius: 12px;
+            padding: 13px 15px;
+            transition: all 0.2s ease;
         }
 
-        .rule-title {
-            font-weight: 800;
-            font-size: 0.92rem;
-            color: var(--text-main);
+        .protocol-item:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(15, 22, 40, 0.85);
+            transform: translateY(-1px);
+        }
+
+        .protocol-rule-title {
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: var(--text-primary);
             margin-bottom: 4px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 7px;
+            letter-spacing: 0.2px;
         }
 
-        .rule-desc {
-            font-size: 0.82rem;
+        .protocol-rule-desc {
+            font-size: 0.8rem;
             color: var(--text-muted);
-            line-height: 1.4;
+            line-height: 1.45;
         }
 
         @media (max-width: 600px) {
-            .main-title { font-size: 2.2rem; }
-            .main-card { padding: 20px 16px; }
-            .terms-grid { grid-template-columns: 1fr; }
+            body { padding: 24px 14px 40px; }
+            .main-title { font-size: 2.1rem; }
+            .main-card { padding: 22px 18px; }
+            .protocol-grid { grid-template-columns: 1fr; }
             .mode-cards-grid { grid-template-columns: 1fr; }
             .avatar-grid { grid-template-columns: repeat(3, 1fr); }
             .colors-row { grid-template-columns: repeat(3, 1fr); }
@@ -466,86 +618,90 @@
 </head>
 <body>
 
-    <div class="bg-glow-1"></div>
-    <div class="bg-glow-2"></div>
+    <!-- Kinetic Background Animation Canvas -->
+    <canvas id="ambient-canvas"></canvas>
+    <div class="ambient-glow-top"></div>
+    <div class="ambient-glow-bottom"></div>
 
     <div class="container">
-        <!-- Header -->
+        <!-- Prestige Header -->
         <header class="header">
-            <div class="logo-badge">
-                <span>⚡ Realtime Multiplayer Arena</span>
+            <div class="crest-emblem">👑</div>
+            <div class="prestige-badge">
+                <span class="status-dot"></span>
+                <span>The Sovereign Strategy Arena</span>
             </div>
             <h1 class="main-title">SNAKES & LADDERS</h1>
-            <p class="subtitle">Realtime Multi-Device Board Game with Admin Controls</p>
+            <p class="subtitle">Multiplayer Arena for 2 to 4 Players</p>
         </header>
 
-        <!-- Navigation Tabs: Create Game vs Join Game -->
-        <div class="tabs-nav">
+        <!-- Executive Mode Navigation: Host Match vs Join Match -->
+        <nav class="tabs-nav" aria-label="Lobby Navigation">
             <button type="button" class="tab-btn active" id="tab-create" onclick="switchTab('create')">
-                <span>👑 Create Game (Admin)</span>
+                <span>👑 Host New Match (Admin)</span>
             </button>
             <button type="button" class="tab-btn" id="tab-join" onclick="switchTab('join')">
-                <span>🔗 Join Existing Game</span>
+                <span>🔗 Enter Existing Arena</span>
             </button>
-        </div>
+        </nav>
 
         <!-- Main Form Card -->
-        <div class="main-card">
+        <main class="main-card">
             <form id="lobby-form" method="POST" action="">
                 {% csrf_token %}
-                <input type="hidden" id="selected-avatar" name="avatar" value="🦊">
-                <input type="hidden" id="selected-color" name="color" value="#ef4444">
+                <input type="hidden" id="selected-avatar" name="avatar" value="👑">
+                <input type="hidden" id="selected-color" name="color" value="#1e40af">
                 <input type="hidden" id="selected-target" name="target_players" value="2">
                 <input type="hidden" id="form-action" name="action" value="create">
 
-                <!-- 1. Player Name -->
+                <!-- 1. Player Designation -->
                 <div class="input-group">
                     <label class="section-label" for="player_name">Your Player Name</label>
                     <div class="name-row">
-                        <input type="text" id="player_name" name="player_name" class="text-input" placeholder="Enter player name" maxlength="15" autocomplete="off" required>
-                        <button type="button" class="btn-dice-random" title="Generate Random Name" onclick="generateRandomName()">🎲</button>
+                        <input type="text" id="player_name" name="player_name" class="text-input" placeholder="Enter your player designation" maxlength="15" autocomplete="off" required>
+                        <button type="button" class="btn-dice-random" title="Generate Aristocratic Name" onclick="generateRandomName()">🎲</button>
                     </div>
                 </div>
 
-                <!-- 2. Avatar Selection -->
+                <!-- 2. Heraldic Crest Token Avatar -->
                 <div class="input-group">
-                    <label class="section-label">Choose Avatar</label>
+                    <label class="section-label">Select Heraldic Emblem</label>
                     <div class="avatar-grid" id="avatar-grid">
-                        <div class="avatar-option active" data-avatar="🦊">🦊</div>
-                        <div class="avatar-option" data-avatar="🦁">🦁</div>
-                        <div class="avatar-option" data-avatar="🐼">🐼</div>
-                        <div class="avatar-option" data-avatar="🐯">🐯</div>
-                        <div class="avatar-option" data-avatar="🐉">🐉</div>
-                        <div class="avatar-option" data-avatar="🤖">🤖</div>
+                        <div class="avatar-option active" data-avatar="👑" title="Sovereign Crown">👑</div>
+                        <div class="avatar-option" data-avatar="⚜️" title="Royal Fleur-de-lis">⚜️</div>
+                        <div class="avatar-option" data-avatar="🛡️" title="Aegis Shield">🛡️</div>
+                        <div class="avatar-option" data-avatar="🦅" title="Imperial Eagle">🦅</div>
+                        <div class="avatar-option" data-avatar="⚔️" title="Dual Blades">⚔️</div>
+                        <div class="avatar-option" data-avatar="🦁" title="Regal Lion">🦁</div>
                     </div>
                 </div>
 
-                <!-- 3. Color Selection -->
+                <!-- 3. Formal Executive Token Color Palette -->
                 <div class="input-group">
-                    <label class="section-label">Choose Token Color</label>
+                    <label class="section-label">Select Formal Token Color</label>
                     <div class="colors-row" id="colors-row">
-                        <div class="color-swatch active" style="background:#ef4444;" data-color="#ef4444" title="Coral Red"></div>
-                        <div class="color-swatch" style="background:#3b82f6;" data-color="#3b82f6" title="Ocean Blue"></div>
-                        <div class="color-swatch" style="background:#eab308;" data-color="#eab308" title="Sun Yellow"></div>
-                        <div class="color-swatch" style="background:#a855f7;" data-color="#a855f7" title="Cosmic Purple"></div>
-                        <div class="color-swatch" style="background:#10b981;" data-color="#10b981" title="Emerald Green"></div>
-                        <div class="color-swatch" style="background:#f97316;" data-color="#f97316" title="Vibrant Orange"></div>
+                        <div class="color-swatch active" style="background:#1e40af;" data-color="#1e40af" title="Imperial Sapphire"></div>
+                        <div class="color-swatch" style="background:#9f1239;" data-color="#9f1239" title="Royal Crimson"></div>
+                        <div class="color-swatch" style="background:#047857;" data-color="#047857" title="Deep Emerald"></div>
+                        <div class="color-swatch" style="background:#b45309;" data-color="#b45309" title="Antique Gold"></div>
+                        <div class="color-swatch" style="background:#6b21a8;" data-color="#6b21a8" title="Amethyst Plum"></div>
+                        <div class="color-swatch" style="background:#475569;" data-color="#475569" title="Polished Titanium"></div>
                     </div>
                 </div>
 
-                <!-- 4. CREATE GAME (ADMIN) SETTINGS -->
+                <!-- 4. HOST ARENA SETTINGS PANEL -->
                 <div id="create-settings-panel">
-                    <!-- Game Mode -->
+                    <!-- Arena Mode -->
                     <div class="input-group">
-                        <label class="section-label">Game Mode</label>
+                        <label class="section-label">Arena Match Mode</label>
                         <div class="mode-cards-grid">
                             <div class="mode-card active" data-mode="create" onclick="setGameMode('create')">
                                 <span class="mode-icon">🌐</span>
-                                <span class="mode-title">Online Room</span>
+                                <span class="mode-title">Online Arena</span>
                             </div>
                             <div class="mode-card" data-mode="instant_bot" onclick="setGameMode('instant_bot')">
                                 <span class="mode-icon">🤖</span>
-                                <span class="mode-title">vs AI Bots</span>
+                                <span class="mode-title">vs AI Arena</span>
                             </div>
                             <div class="mode-card" data-mode="pass_and_play" onclick="setGameMode('pass_and_play')">
                                 <span class="mode-icon">💻</span>
@@ -554,9 +710,9 @@
                         </div>
                     </div>
 
-                    <!-- Number of Players -->
+                    <!-- Target Player Capacity -->
                     <div class="input-group">
-                        <label class="section-label">Admin: Select Number of Players to Join</label>
+                        <label class="section-label">Admin: Required Number of Players</label>
                         <div class="players-count-group">
                             <div class="player-count-btn active" data-count="2" onclick="setTargetCount(2)">👥 2 Players</div>
                             <div class="player-count-btn" data-count="3" onclick="setTargetCount(3)">👥 3 Players</div>
@@ -564,75 +720,146 @@
                         </div>
                     </div>
 
-                    <!-- Submit Create Button -->
-                    <button type="submit" class="btn-primary" id="btn-create-submit">
-                        <span>👑 CREATE MATCH (AS ADMIN)</span>
+                    <!-- Initialize Arena Submit Button -->
+                    <button type="submit" class="btn-formal" id="btn-create-submit">
+                        <span>👑 INITIALIZE MATCH (AS ADMIN)</span>
                     </button>
                 </div>
 
-                <!-- 5. JOIN GAME PANEL (Hidden on initial load) -->
+                <!-- 5. JOIN ARENA PANEL (Hidden on initial load) -->
                 <div id="join-settings-panel" style="display:none;">
                     <div class="input-group">
-                        <label class="section-label" for="room_code">Enter 6-Digit Room Code</label>
+                        <label class="section-label" for="room_code">Enter 6-Digit Match Room Code</label>
                         <input type="text" id="room_code" name="room_code" class="text-input join-code-input" placeholder="ABC123" maxlength="6" autocomplete="off">
                     </div>
 
-                    <button type="submit" class="btn-primary btn-blue">
-                        <span>🚀 JOIN MATCH ARENA</span>
+                    <button type="submit" class="btn-formal btn-formal-gold">
+                        <span>🚀 ENTER MATCH ARENA</span>
                     </button>
                 </div>
             </form>
-        </div>
+        </main>
 
-        <!-- 6. TERMS & GAME RULES CARD -->
-        <div class="terms-card">
-            <div class="terms-header">
-                <span style="font-size:1.4rem;">📜</span>
-                <h2 class="terms-title">Rules & Terms of the Game</h2>
+        <!-- 6. PROTOCOL & RULES OF ENGAGEMENT CARD -->
+        <section class="protocol-card" aria-label="Arena Protocol & Rules">
+            <div class="protocol-header">
+                <span style="font-size:1.3rem;">📜</span>
+                <h2 class="protocol-title">Rules of Engagement & Arena Protocol</h2>
             </div>
 
-            <div class="terms-grid">
-                <div class="rule-item">
-                    <div class="rule-title">👑 Admin Control</div>
-                    <div class="rule-desc">The room creator acts as Admin, sets the required player count (2, 3, or 4), and starts the match once players enter.</div>
+            <div class="protocol-grid">
+                <div class="protocol-item">
+                    <div class="protocol-rule-title">👑 Executive Host Authority</div>
+                    <div class="protocol-rule-desc">The match creator acts as Admin, sets player capacity (2, 3, or 4), and initiates the game once all players have entered.</div>
                 </div>
 
-                <div class="rule-item">
-                    <div class="rule-title">🚫 Locked Dice Rolling</div>
-                    <div class="rule-desc">Dice rolling is locked until the Admin starts the game and all players are placed on the board.</div>
+                <div class="protocol-item">
+                    <div class="protocol-rule-title">🚫 Synchronized Rolling</div>
+                    <div class="protocol-rule-desc">Dice interaction is securely locked until the Admin commences the match and each tactician occupies tile 1.</div>
                 </div>
 
-                <div class="rule-item">
-                    <div class="rule-title">🎲 Realtime Turn Rotation</div>
-                    <div class="rule-desc">Each player rolls on their turn. When a player moves, all other connected laptops view the movement in real time.</div>
+                <div class="protocol-item">
+                    <div class="protocol-rule-title">🎲 Realtime Turn Transmission</div>
+                    <div class="protocol-rule-desc">Players roll sequentially on their designated turn. Every hop and slide broadcasts instantly across all connected screens.</div>
                 </div>
 
-                <div class="rule-item">
-                    <div class="rule-title">🐍 Snakes & 🪜 Ladders</div>
-                    <div class="rule-desc">Stepping on a snake head slides you down to its tail. Stepping on a ladder foot climbs you straight to the top!</div>
+                <div class="protocol-item">
+                    <div class="protocol-rule-title">🐍 Serpents & 🪜 Ascents</div>
+                    <div class="protocol-rule-desc">Stepping on a serpent head forces an immediate slide to its tail. Stepping on a ladder base grants an immediate ascent to the summit.</div>
                 </div>
 
-                <div class="rule-item">
-                    <div class="rule-title">🎯 Exact 100 to Win</div>
-                    <div class="rule-desc">You must roll the exact number to land on tile 100. The first player to reach 100 wins the match trophy!</div>
+                <div class="protocol-item">
+                    <div class="protocol-rule-title">🎯 Exact Century Rule</div>
+                    <div class="protocol-rule-desc">Victory demands an exact roll to land squarely on tile 100. Overrolls remain stationed at the current tile until the next turn.</div>
                 </div>
 
-                <div class="rule-item">
-                    <div class="rule-title">🎨 Color Selection</div>
-                    <div class="rule-desc">Every player can choose their custom token color from the palette, visible to all players in the arena.</div>
+                <div class="protocol-item">
+                    <div class="protocol-rule-title">⚜️ Distinct Heraldry</div>
+                    <div class="protocol-rule-desc">Each player selects a signature crest and tailored formal color from the palette, rendered clearly for all participants.</div>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 
     <script>
-        const randomNames = [
-            "ShadowBlade", "CosmicFox", "GoldenTiger", "CyberDragon", "NeonViper",
-            "MysticLion", "PhoenixRider", "AstroPanda", "ThunderWolf", "SpeedyGamer"
+        // Kinetic Ambient Dust / Constellation Particle System
+        (function initCanvasParticles() {
+            const canvas = document.getElementById('ambient-canvas');
+            const ctx = canvas.getContext('2d');
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            const particles = [];
+            const count = Math.min(48, Math.floor((width * height) / 22000));
+
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.35,
+                    vy: (Math.random() - 0.5) * 0.35,
+                    size: Math.random() * 2 + 1,
+                    alpha: Math.random() * 0.45 + 0.15,
+                    gold: Math.random() > 0.4
+                });
+            }
+
+            function render() {
+                ctx.clearRect(0, 0, width, height);
+
+                // Update & draw particles
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0) p.x = width;
+                    if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height;
+                    if (p.y > height) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = p.gold 
+                        ? `rgba(212, 175, 55, ${p.alpha})`
+                        : `rgba(59, 130, 246, ${p.alpha * 0.8})`;
+                    ctx.fill();
+
+                    // Subtle constellation connecting filaments
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const p2 = particles[j];
+                        const dx = p.x - p2.x;
+                        const dy = p.y - p2.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 110) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.strokeStyle = `rgba(212, 175, 55, ${(1 - dist / 110) * 0.08})`;
+                            ctx.lineWidth = 0.8;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(render);
+            }
+            render();
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+        })();
+
+        // Distinguished Aristocratic / Tactical Names
+        const distinguishedNames = [
+            "LordSterling", "BaronVane", "DukeValerius", "ArchonKael",
+            "CommanderReid", "SovereignGrey", "HighTactician", "ConsulVance",
+            "GrandMarshal", "AegisKnight", "CountMontague", "ViceroyCole"
         ];
 
         function generateRandomName() {
-            const random = randomNames[Math.floor(Math.random() * randomNames.length)];
+            const random = distinguishedNames[Math.floor(Math.random() * distinguishedNames.length)];
             document.getElementById('player_name').value = random;
         }
 
@@ -663,7 +890,7 @@
             }
         }
 
-        // Avatar selector
+        // Avatar Crest Selector
         const avatarOptions = document.querySelectorAll('.avatar-option');
         const avatarInput = document.getElementById('selected-avatar');
         avatarOptions.forEach(opt => {
@@ -674,7 +901,7 @@
             });
         });
 
-        // Color selector
+        // Color Swatch Selector
         const colorSwatches = document.querySelectorAll('.color-swatch');
         const colorInput = document.getElementById('selected-color');
         colorSwatches.forEach(swatch => {
@@ -685,7 +912,7 @@
             });
         });
 
-        // Mode selector
+        // Mode Selector
         function setGameMode(mode) {
             document.querySelectorAll('.mode-card').forEach(c => {
                 c.classList.toggle('active', c.getAttribute('data-mode') === mode);
@@ -693,7 +920,7 @@
             document.getElementById('form-action').value = mode;
         }
 
-        // Target Players selector
+        // Target Players Selector
         function setTargetCount(count) {
             document.querySelectorAll('.player-count-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-count') == count);
@@ -712,7 +939,7 @@
             if (act === 'join' && !codeInput.value.trim()) {
                 e.preventDefault();
                 codeInput.focus();
-                codeInput.style.borderColor = '#f43f5e';
+                codeInput.style.borderColor = '#9f1239';
                 setTimeout(() => { codeInput.style.borderColor = ''; }, 1500);
             }
         });
