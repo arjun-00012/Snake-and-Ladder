@@ -40,7 +40,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         36: 44,
         51: 67,
         71: 91,
-        80: 100
+        80: 90
     }
 
     async def connect(self):

@@ -151,6 +151,10 @@ class GameConsumerTests(TestCase):
         ladder_bases = set(GameConsumer.LADDERS.keys())
         self.assertEqual(len(snake_heads.intersection(ladder_bases)), 0)
 
+        # Ensure ladder at 80 leads to 90, and no ladder leads directly to 100
+        self.assertEqual(GameConsumer.LADDERS.get(80), 90)
+        self.assertNotIn(100, GameConsumer.LADDERS.values())
+
     async def test_two_player_room_strict_capacity_and_third_player_rejection(self):
         # 1. Admin creates a 2-player room
         admin_comm = WebsocketCommunicator(application, "/ws/game/TEST2P/")
