@@ -147,3 +147,85 @@ class GameConsumerTests(TestCase):
         ladder_bases = set(GameConsumer.LADDERS.keys())
         self.assertEqual(len(snake_heads.intersection(ladder_bases)), 0)
 
+    async def test_two_player_room_strict_capacity_and_third_player_rejection(self):
+        # 1. Admin creates a 2-player room
+        admin_comm = WebsocketCommunicator(application, "/ws/game/TEST2P/")
+        await admin_comm.connect()
+        await admin_comm.send_json_to({
+            "action": "join",
+            "name": "AdminPlayer",
+            "avatar": "🦊",
+            "color": "#ef4444",
+            "target": 2,
+            "mode": "create"
+        })
+        admin_init = await admin_comm.receive_json_from()
+        self.assertTrue(admin_init["is_host"])
+        admin_state1 = await admin_comm.receive_json_from()
+        self.assertEqual(len(admin_state1["state"]["players"]), 1)
+        self.assertEqual(admin_state1["state"]["target_players"], 2)
+
+        # 2. Admin attempts to start game early - must be blocked with error_msg, NO bot added
+        await admin_comm.send_json_to({"action": "start_game"})
+        early_err = await admin_comm.receive_json_from()
+        self.assertEqual(early_err["type"], "error_msg")
+        self.assertIn("Waiting for all players to join", early_err["message"])
+        # Room must still have only 1 player, NOT 2 with a bot
+        self.assertEqual(len(ROOM_STATES["TEST2P"]["players"]), 1)
+
+        # 3. Friend enters the room code and joins as Player 2
+        friend_comm = WebsocketCommunicator(application, "/ws/game/TEST2P/")
+        await friend_comm.connect()
+        await friend_comm.send_json_to({
+            "action": "join",
+            "name": "FriendPlayer",
+            "avatar": "🦁",
+            "color": "#3b82f6",
+            "target": 2,
+            "mode": "join"
+        })
+        friend_init = await friend_comm.receive_json_from()
+        self.assertFalse(friend_init["is_host"])
+
+        # Both receive state update with exactly 2 players
+        admin_sees_friend = await admin_comm.receive_json_from()
+        self.assertEqual(len(admin_sees_friend["state"]["players"]), 2)
+        friend_sees_all = await friend_comm.receive_json_from()
+        self.assertEqual(len(friend_sees_all["state"]["players"]), 2)
+
+        # Verify both players are human, no bots
+        self.assertFalse(admin_sees_friend["state"]["players"][0]["is_bot"])
+        self.assertFalse(admin_sees_friend["state"]["players"][1]["is_bot"])
+
+        # 4. Third player attempts to join - MUST be rejected with room_full!
+        third_comm = WebsocketCommunicator(application, "/ws/game/TEST2P/")
+        await third_comm.connect()
+        await third_comm.send_json_to({
+            "action": "join",
+            "name": "ThirdIntruder",
+            "avatar": "🐼",
+            "color": "#10b981",
+            "target": 2,
+            "mode": "join"
+        })
+        rejected_resp = await third_comm.receive_json_from()
+        self.assertEqual(rejected_resp["type"], "room_full")
+        self.assertIn("room is full", rejected_resp["message"])
+
+        # Confirm room STILL has exactly 2 players
+        self.assertEqual(len(ROOM_STATES["TEST2P"]["players"]), 2)
+
+        # 5. Admin starts the game now that 2/2 players are ready
+        await admin_comm.send_json_to({"action": "start_game"})
+        start_state_admin = await admin_comm.receive_json_from()
+        self.assertEqual(start_state_admin["state"]["status"], "playing")
+        self.assertEqual(len(start_state_admin["state"]["players"]), 2)
+
+        start_state_friend = await friend_comm.receive_json_from()
+        self.assertEqual(start_state_friend["state"]["status"], "playing")
+
+        await third_comm.disconnect()
+        await friend_comm.disconnect()
+        await admin_comm.disconnect()
+
+

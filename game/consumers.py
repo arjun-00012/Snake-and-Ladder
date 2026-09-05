@@ -174,40 +174,50 @@ class GameConsumer(AsyncWebsocketConsumer):
                         "connected": True,
                     })
             else:
-                existing_player = next((p for p in state["players"] if p["id"] == self.channel_name), None)
+                existing_player = next((p for p in state["players"] if p["id"] == self.channel_name or (state["status"] == "waiting" and p["name"] == player_name)), None)
                 if existing_player:
+                    existing_player["id"] = self.channel_name
                     existing_player["name"] = player_name
                     existing_player["avatar"] = avatar
                     if preferred_color:
                         existing_player["color"] = preferred_color
+                    if existing_player.get("is_host"):
+                        state["host_id"] = self.channel_name
                 else:
-                    if len(state["players"]) < 4:
-                        used_colors = [p["color"] for p in state["players"]]
-                        chosen_color = preferred_color
-                        if not chosen_color or chosen_color in used_colors:
-                            for c in AVAILABLE_COLORS:
-                                if c["bg"] not in used_colors:
-                                    chosen_color = c["bg"]
-                                    break
-                            if not chosen_color:
-                                chosen_color = AVAILABLE_COLORS[len(state["players"]) % len(AVAILABLE_COLORS)]["bg"]
+                    # Strictly enforce player capacity: do not allow extra players beyond target_players!
+                    if len(state["players"]) >= state["target_players"] or state["status"] != "waiting":
+                        await self.send(text_data=json.dumps({
+                            'type': 'room_full',
+                            'message': f"This room is full ({len(state['players'])}/{state['target_players']} players). You cannot join this match."
+                        }))
+                        return
 
-                        new_player = {
-                            "id": self.channel_name,
-                            "name": player_name,
-                            "avatar": avatar,
-                            "color": chosen_color,
-                            "position": 1,
-                            "is_bot": False,
-                            "is_host": is_host,
-                            "connected": True,
-                        }
-                        state["players"].append(new_player)
+                    used_colors = [p["color"] for p in state["players"]]
+                    chosen_color = preferred_color
+                    if not chosen_color or chosen_color in used_colors:
+                        for c in AVAILABLE_COLORS:
+                            if c["bg"] not in used_colors:
+                                chosen_color = c["bg"]
+                                break
+                        if not chosen_color:
+                            chosen_color = AVAILABLE_COLORS[len(state["players"]) % len(AVAILABLE_COLORS)]["bg"]
 
-                        # Auto-fill AI bots if Instant Bot mode
-                        if mode == 'instant_bot' and is_host:
-                            while len(state["players"]) < state["target_players"]:
-                                self.add_bot_sync(state)
+                    new_player = {
+                        "id": self.channel_name,
+                        "name": player_name,
+                        "avatar": avatar,
+                        "color": chosen_color,
+                        "position": 1,
+                        "is_bot": False,
+                        "is_host": is_host,
+                        "connected": True,
+                    }
+                    state["players"].append(new_player)
+
+                    # Only auto-fill AI bots if explicit 'instant_bot' mode was selected by host
+                    if mode == 'instant_bot' and is_host:
+                        while len(state["players"]) < state["target_players"]:
+                            self.add_bot_sync(state)
 
             # Send init response to this client
             await self.send(text_data=json.dumps({
@@ -238,12 +248,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         elif action == 'start_game':
             if state["host_id"] == self.channel_name:
-                # Auto-fill any unfilled slots with AI bots up to target_players
-                while len(state["players"]) < state["target_players"]:
-                    self.add_bot_sync(state)
-
-                if len(state["players"]) < 2:
-                    self.add_bot_sync(state)
+                # Do NOT auto-spawn extra bots! Require all target players to be present
+                if len(state["players"]) < state["target_players"]:
+                    await self.send(text_data=json.dumps({
+                        'type': 'error_msg',
+                        'message': f"Waiting for all players to join ({len(state['players'])}/{state['target_players']})! Share room code: {self.room_name}."
+                    }))
+                    return
 
                 state["status"] = "playing"
                 state["turn_index"] = 0
@@ -260,7 +271,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                     asyncio.create_task(self.trigger_bot_turn(delay=1.5))
 
         elif action == 'add_bot':
-            if state["host_id"] == self.channel_name and len(state["players"]) < 4 and state["status"] == "waiting":
+            # Do NOT exceed target_players capacity
+            if state["host_id"] == self.channel_name and len(state["players"]) < state["target_players"] and state["status"] == "waiting":
                 self.add_bot_sync(state)
                 await self.broadcast_state("AI Bot added to the arena.")
 
@@ -321,7 +333,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                     asyncio.create_task(self.trigger_bot_turn(delay=1.5))
 
     def add_bot_sync(self, state):
-        if len(state["players"]) >= 4:
+        if len(state["players"]) >= state.get("target_players", 2):
             return
         state["bot_count"] += 1
         bot_idx = state["bot_count"]
