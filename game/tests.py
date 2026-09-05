@@ -111,9 +111,13 @@ class GameConsumerTests(TestCase):
             "action": "join",
             "name": "PlayerOne",
             "target": 2,
-            "mode": "instant_bot"
+            "mode": "create"
         })
         await comm.receive_json_from() # init
+        await comm.receive_json_from() # state
+
+        # Add bot explicitly
+        await comm.send_json_to({"action": "add_bot"})
         await comm.receive_json_from() # state
 
         # Start game
@@ -227,5 +231,77 @@ class GameConsumerTests(TestCase):
         await third_comm.disconnect()
         await friend_comm.disconnect()
         await admin_comm.disconnect()
+
+    async def test_lobby_form_to_room_join_flow(self):
+        # 1. Admin submits lobby form with 2 players
+        from django.test import Client
+        import urllib.parse
+        client = Client()
+        post_resp = client.post('/', {
+            'player_name': 'AdminHost',
+            'avatar': '👑',
+            'color': '#1e40af',
+            'target_players': '2',
+            'action': 'create'
+        })
+        self.assertEqual(post_resp.status_code, 302)
+        redirect_url = post_resp.url
+        # Parse room code from redirect URL
+        # URL is /room/ABC123/?name=...
+        parsed = urllib.parse.urlparse(redirect_url)
+        path_parts = parsed.path.strip('/').split('/')
+        room_code = path_parts[1]
+        query = urllib.parse.parse_qs(parsed.query)
+
+        # 2. Admin connects to room websocket
+        admin_comm = WebsocketCommunicator(application, f"/ws/game/{room_code}/")
+        await admin_comm.connect()
+        await admin_comm.send_json_to({
+            "action": "join",
+            "name": query['name'][0],
+            "avatar": query['avatar'][0],
+            "color": query['color'][0],
+            "target": int(query['target'][0]),
+            "mode": query['mode'][0]
+        })
+        init_resp = await admin_comm.receive_json_from()
+        # MUST have ONLY 1 player (the Admin)
+        self.assertEqual(len(init_resp["state"]["players"]), 1)
+        self.assertEqual(init_resp["state"]["players"][0]["name"], "AdminHost")
+        self.assertTrue(init_resp["state"]["players"][0]["is_host"])
+        self.assertFalse(init_resp["state"]["players"][0]["is_bot"])
+
+        # 3. Friend enters code in join tab
+        guest_post = client.post('/', {
+            'player_name': 'FriendGuest',
+            'avatar': '🦅',
+            'color': '#9f1239',
+            'room_code': room_code,
+            'action': 'join'
+        })
+        self.assertEqual(guest_post.status_code, 302)
+        guest_redirect = urllib.parse.urlparse(guest_post.url)
+        guest_query = urllib.parse.parse_qs(guest_redirect.query)
+
+        # 4. Friend connects to room websocket with code
+        guest_comm = WebsocketCommunicator(application, f"/ws/game/{room_code}/")
+        await guest_comm.connect()
+        await guest_comm.send_json_to({
+            "action": "join",
+            "name": guest_query['name'][0],
+            "avatar": guest_query['avatar'][0],
+            "color": guest_query['color'][0],
+            "target": int(guest_query.get('target', ['2'])[0]),
+            "mode": guest_query['mode'][0]
+        })
+        guest_init = await guest_comm.receive_json_from()
+        # MUST successfully join with 2 players now
+        self.assertNotEqual(guest_init.get("type"), "room_full")
+        self.assertEqual(len(guest_init["state"]["players"]), 2)
+        self.assertEqual(guest_init["state"]["players"][1]["name"], "FriendGuest")
+
+        await guest_comm.disconnect()
+        await admin_comm.disconnect()
+
 
 

@@ -376,52 +376,6 @@
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
         }
 
-        /* Formal Game Mode Cards */
-        .mode-cards-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .mode-card {
-            background: rgba(10, 15, 28, 0.7);
-            border: 1px solid var(--border-medium);
-            border-radius: 14px;
-            padding: 14px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.22s ease;
-        }
-
-        .mode-card:hover {
-            background: rgba(22, 32, 54, 0.85);
-            border-color: rgba(255, 255, 255, 0.25);
-            transform: translateY(-2px);
-        }
-
-        .mode-card.active {
-            border-color: var(--gold-primary);
-            background: rgba(212, 175, 55, 0.1);
-            box-shadow: 0 4px 18px rgba(212, 175, 55, 0.18);
-        }
-
-        .mode-icon {
-            font-size: 1.4rem;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .mode-title {
-            font-size: 0.84rem;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-        }
-
-        .mode-card.active .mode-title {
-            color: var(--gold-light);
-        }
-
         /* Player Capacity Selector */
         .players-count-group {
             display: grid;
@@ -691,25 +645,6 @@
 
                 <!-- 4. HOST ARENA SETTINGS PANEL -->
                 <div id="create-settings-panel">
-                    <!-- Arena Mode -->
-                    <div class="input-group">
-                        <label class="section-label">Arena Match Mode</label>
-                        <div class="mode-cards-grid">
-                            <div class="mode-card active" data-mode="create" onclick="setGameMode('create')">
-                                <span class="mode-icon">🌐</span>
-                                <span class="mode-title">Online Arena</span>
-                            </div>
-                            <div class="mode-card" data-mode="instant_bot" onclick="setGameMode('instant_bot')">
-                                <span class="mode-icon">🤖</span>
-                                <span class="mode-title">vs AI Arena</span>
-                            </div>
-                            <div class="mode-card" data-mode="pass_and_play" onclick="setGameMode('pass_and_play')">
-                                <span class="mode-icon">💻</span>
-                                <span class="mode-title">Pass & Play</span>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Target Player Capacity -->
                     <div class="input-group">
                         <label class="section-label">Admin: Required Number of Players</label>
@@ -911,14 +846,6 @@
                 colorInput.value = swatch.getAttribute('data-color');
             });
         });
-
-        // Mode Selector
-        function setGameMode(mode) {
-            document.querySelectorAll('.mode-card').forEach(c => {
-                c.classList.toggle('active', c.getAttribute('data-mode') === mode);
-            });
-            document.getElementById('form-action').value = mode;
-        }
 
         // Target Players Selector
         function setTargetCount(count) {

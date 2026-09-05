@@ -155,69 +155,45 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.broadcast_state(f"{player_name} reconnected to the arena! ⚡")
                 return
 
-            # Handle Pass & Play mode: setup multiple local players on single connection
-            if mode == 'pass_and_play' and is_host and len(state["players"]) == 0:
-                state["status"] = "playing"
-                state["target_players"] = target_players
-                for i in range(target_players):
-                    p_name = player_name if i == 0 else f"Player {i + 1}"
-                    p_avatar = avatar if i == 0 else DEFAULT_AVATARS[i % len(DEFAULT_AVATARS)]
-                    p_color = preferred_color if i == 0 else AVAILABLE_COLORS[i % len(AVAILABLE_COLORS)]["bg"]
-                    state["players"].append({
-                        "id": f"{self.channel_name}_p{i}",
-                        "name": p_name,
-                        "avatar": p_avatar,
-                        "color": p_color,
-                        "position": 1,
-                        "is_bot": False,
-                        "is_host": (i == 0),
-                        "connected": True,
-                    })
+            existing_player = next((p for p in state["players"] if p["id"] == self.channel_name or (state["status"] == "waiting" and p["name"] == player_name)), None)
+            if existing_player:
+                existing_player["id"] = self.channel_name
+                existing_player["name"] = player_name
+                existing_player["avatar"] = avatar
+                if preferred_color:
+                    existing_player["color"] = preferred_color
+                if existing_player.get("is_host"):
+                    state["host_id"] = self.channel_name
             else:
-                existing_player = next((p for p in state["players"] if p["id"] == self.channel_name or (state["status"] == "waiting" and p["name"] == player_name)), None)
-                if existing_player:
-                    existing_player["id"] = self.channel_name
-                    existing_player["name"] = player_name
-                    existing_player["avatar"] = avatar
-                    if preferred_color:
-                        existing_player["color"] = preferred_color
-                    if existing_player.get("is_host"):
-                        state["host_id"] = self.channel_name
-                else:
-                    # Strictly enforce player capacity: do not allow extra players beyond target_players!
-                    if len(state["players"]) >= state["target_players"] or state["status"] != "waiting":
-                        await self.send(text_data=json.dumps({
-                            'type': 'room_full',
-                            'message': f"This room is full ({len(state['players'])}/{state['target_players']} players). You cannot join this match."
-                        }))
-                        return
+                # Strictly enforce player capacity: do not allow extra players beyond target_players!
+                if len(state["players"]) >= state["target_players"] or state["status"] != "waiting":
+                    await self.send(text_data=json.dumps({
+                        'type': 'room_full',
+                        'message': f"This room is full ({len(state['players'])}/{state['target_players']} players). You cannot join this match."
+                    }))
+                    return
 
-                    used_colors = [p["color"] for p in state["players"]]
-                    chosen_color = preferred_color
-                    if not chosen_color or chosen_color in used_colors:
-                        for c in AVAILABLE_COLORS:
-                            if c["bg"] not in used_colors:
-                                chosen_color = c["bg"]
-                                break
-                        if not chosen_color:
-                            chosen_color = AVAILABLE_COLORS[len(state["players"]) % len(AVAILABLE_COLORS)]["bg"]
+                used_colors = [p["color"] for p in state["players"]]
+                chosen_color = preferred_color
+                if not chosen_color or chosen_color in used_colors:
+                    for c in AVAILABLE_COLORS:
+                        if c["bg"] not in used_colors:
+                            chosen_color = c["bg"]
+                            break
+                    if not chosen_color:
+                        chosen_color = AVAILABLE_COLORS[len(state["players"]) % len(AVAILABLE_COLORS)]["bg"]
 
-                    new_player = {
-                        "id": self.channel_name,
-                        "name": player_name,
-                        "avatar": avatar,
-                        "color": chosen_color,
-                        "position": 1,
-                        "is_bot": False,
-                        "is_host": is_host,
-                        "connected": True,
-                    }
-                    state["players"].append(new_player)
-
-                    # Only auto-fill AI bots if explicit 'instant_bot' mode was selected by host
-                    if mode == 'instant_bot' and is_host:
-                        while len(state["players"]) < state["target_players"]:
-                            self.add_bot_sync(state)
+                new_player = {
+                    "id": self.channel_name,
+                    "name": player_name,
+                    "avatar": avatar,
+                    "color": chosen_color,
+                    "position": 1,
+                    "is_bot": False,
+                    "is_host": is_host,
+                    "connected": True,
+                }
+                state["players"].append(new_player)
 
             # Send init response to this client
             await self.send(text_data=json.dumps({
