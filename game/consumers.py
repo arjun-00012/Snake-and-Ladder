@@ -15,6 +15,7 @@ AVAILABLE_COLORS = [
     {"bg": "#f97316", "name": "Vibrant Orange"},
 ]
 
+DEFAULT_AVATARS = ['🦊', '🦁', '🐼', '🐯', '🐉', '🤖']
 BOT_NAMES = ['Cyber Bot 🤖', 'Neo Bot ⚡', 'Pixel Bot 👾', 'Turbo Bot 🚀']
 
 class GameConsumer(AsyncWebsocketConsumer):
@@ -50,7 +51,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             ROOM_STATES[self.room_name] = {
                 "host_id": self.channel_name,
                 "players": [],
-                "target_players": 2, # Default 2 players, configurable to 3 or 4
+                "target_players": 2, # Configurable by Admin (2, 3, or 4)
                 "status": "waiting",  # "waiting", "playing", "finished"
                 "turn_index": 0,
                 "winner": None,
@@ -71,31 +72,37 @@ class GameConsumer(AsyncWebsocketConsumer):
                     break
 
             if player_to_remove:
-                state["players"].remove(player_to_remove)
+                if state["status"] == "waiting":
+                    state["players"].remove(player_to_remove)
 
-                # Reassign host if host disconnected
-                if state["host_id"] == self.channel_name:
+                    # Reassign Admin / Host if host left
+                    if state["host_id"] == self.channel_name:
+                        human_players = [p for p in state["players"] if not p["is_bot"]]
+                        if human_players:
+                            state["host_id"] = human_players[0]["id"]
+                            human_players[0]["is_host"] = True
+                        else:
+                            state["host_id"] = None
+
                     human_players = [p for p in state["players"] if not p["is_bot"]]
-                    if human_players:
-                        state["host_id"] = human_players[0]["id"]
-                        human_players[0]["is_host"] = True
-                    else:
-                        state["host_id"] = None
+                    if len(human_players) == 0:
+                        ROOM_STATES.pop(self.room_name, None)
+                        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+                        return
 
-                # Clean up if room is completely empty
-                human_players = [p for p in state["players"] if not p["is_bot"]]
-                if len(human_players) == 0:
-                    ROOM_STATES.pop(self.room_name, None)
-                    await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-                    return
-
-                # Adjust turn index if out of bounds
-                if state["turn_index"] >= len(state["players"]):
-                    state["turn_index"] = 0
-
-                await self.broadcast_state(
-                    f"{player_to_remove['name']} left the room."
-                )
+                    await self.broadcast_state(
+                        f"{player_to_remove['name']} left the lobby."
+                    )
+                else:
+                    # In-game disconnect: mark disconnected so player can reconnect
+                    player_to_remove["connected"] = False
+                    human_connected = [p for p in state["players"] if not p["is_bot"] and p.get("connected", True)]
+                    if len(human_connected) == 0:
+                        # Schedule room cleanup after 60s if everyone left
+                        pass
+                    await self.broadcast_state(
+                        f"{player_to_remove['name']} disconnected."
+                    )
 
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
@@ -115,47 +122,92 @@ class GameConsumer(AsyncWebsocketConsumer):
             avatar = data.get('avatar', '🦊')
             preferred_color = data.get('color', None)
             target_players = int(data.get('target', 2))
-            is_instant_bot = (data.get('mode') == 'instant_bot')
+            mode = data.get('mode', 'create')
 
-            # Check if player is reconnecting
-            existing_player = next((p for p in state["players"] if p["id"] == self.channel_name), None)
-            if existing_player:
-                existing_player["name"] = player_name
-                existing_player["avatar"] = avatar
-                if preferred_color:
-                    existing_player["color"] = preferred_color
-            else:
-                if len(state["players"]) < 4:
-                    is_host = (state["host_id"] == self.channel_name) or (len(state["players"]) == 0)
-                    if is_host:
-                        state["host_id"] = self.channel_name
-                        state["target_players"] = max(2, min(4, target_players))
+            is_host = (state["host_id"] == self.channel_name) or (len(state["players"]) == 0)
+            if is_host:
+                state["host_id"] = self.channel_name
+                state["target_players"] = max(2, min(4, target_players))
 
-                    # Determine color: use preferred if available, otherwise pick next available color
-                    used_colors = [p["color"] for p in state["players"]]
-                    chosen_color = preferred_color
-                    if not chosen_color or chosen_color in used_colors:
-                        for c in AVAILABLE_COLORS:
-                            if c["bg"] not in used_colors:
-                                chosen_color = c["bg"]
-                                break
-                        if not chosen_color:
-                            chosen_color = AVAILABLE_COLORS[len(state["players"]) % len(AVAILABLE_COLORS)]["bg"]
+            # Check if this is a reconnecting player during an active match
+            reconnecting_player = next(
+                (p for p in state["players"] if not p["is_bot"] and p["name"] == player_name and not p.get("connected", True)),
+                None
+            )
 
-                    new_player = {
-                        "id": self.channel_name,
-                        "name": player_name,
-                        "avatar": avatar,
-                        "color": chosen_color,
+            if reconnecting_player:
+                reconnecting_player["id"] = self.channel_name
+                reconnecting_player["connected"] = True
+                reconnecting_player["avatar"] = avatar
+                if reconnecting_player.get("is_host"):
+                    state["host_id"] = self.channel_name
+
+                # Send init response to reconnecting client
+                await self.send(text_data=json.dumps({
+                    'type': 'init',
+                    'my_id': self.channel_name,
+                    'is_host': (state["host_id"] == self.channel_name),
+                    'snakes': self.SNAKES,
+                    'ladders': self.LADDERS,
+                    'available_colors': AVAILABLE_COLORS,
+                    'state': self.compile_state(state)
+                }))
+                await self.broadcast_state(f"{player_name} reconnected to the arena! ⚡")
+                return
+
+            # Handle Pass & Play mode: setup multiple local players on single connection
+            if mode == 'pass_and_play' and is_host and len(state["players"]) == 0:
+                state["status"] = "playing"
+                state["target_players"] = target_players
+                for i in range(target_players):
+                    p_name = player_name if i == 0 else f"Player {i + 1}"
+                    p_avatar = avatar if i == 0 else DEFAULT_AVATARS[i % len(DEFAULT_AVATARS)]
+                    p_color = preferred_color if i == 0 else AVAILABLE_COLORS[i % len(AVAILABLE_COLORS)]["bg"]
+                    state["players"].append({
+                        "id": f"{self.channel_name}_p{i}",
+                        "name": p_name,
+                        "avatar": p_avatar,
+                        "color": p_color,
                         "position": 1,
                         "is_bot": False,
-                        "is_host": is_host,
-                    }
-                    state["players"].append(new_player)
+                        "is_host": (i == 0),
+                        "connected": True,
+                    })
+            else:
+                existing_player = next((p for p in state["players"] if p["id"] == self.channel_name), None)
+                if existing_player:
+                    existing_player["name"] = player_name
+                    existing_player["avatar"] = avatar
+                    if preferred_color:
+                        existing_player["color"] = preferred_color
+                else:
+                    if len(state["players"]) < 4:
+                        used_colors = [p["color"] for p in state["players"]]
+                        chosen_color = preferred_color
+                        if not chosen_color or chosen_color in used_colors:
+                            for c in AVAILABLE_COLORS:
+                                if c["bg"] not in used_colors:
+                                    chosen_color = c["bg"]
+                                    break
+                            if not chosen_color:
+                                chosen_color = AVAILABLE_COLORS[len(state["players"]) % len(AVAILABLE_COLORS)]["bg"]
 
-                    # If Instant Bot mode requested by host, automatically add AI bot
-                    if is_instant_bot and is_host and len(state["players"]) == 1:
-                        self.add_bot_sync(state)
+                        new_player = {
+                            "id": self.channel_name,
+                            "name": player_name,
+                            "avatar": avatar,
+                            "color": chosen_color,
+                            "position": 1,
+                            "is_bot": False,
+                            "is_host": is_host,
+                            "connected": True,
+                        }
+                        state["players"].append(new_player)
+
+                        # Auto-fill AI bots if Instant Bot mode
+                        if mode == 'instant_bot' and is_host:
+                            while len(state["players"]) < state["target_players"]:
+                                self.add_bot_sync(state)
 
             # Send init response to this client
             await self.send(text_data=json.dumps({
@@ -168,7 +220,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'state': self.compile_state(state)
             }))
 
-            # Broadcast updated state to all players in the room
             await self.broadcast_state(f"{player_name} joined the arena.")
 
         elif action == 'change_color':
@@ -177,17 +228,17 @@ class GameConsumer(AsyncWebsocketConsumer):
                 player = next((p for p in state["players"] if p["id"] == self.channel_name), None)
                 if player:
                     player["color"] = new_color
-                    await self.broadcast_state(f"{player['name']} changed color.")
+                    await self.broadcast_state(f"{player['name']} switched color.")
 
         elif action == 'set_target_players':
             if state["host_id"] == self.channel_name and state["status"] == "waiting":
                 target = int(data.get('target', 2))
                 state["target_players"] = max(2, min(4, target))
-                await self.broadcast_state(f"Host set target players to {state['target_players']}.")
+                await self.broadcast_state(f"Admin set player capacity to {state['target_players']}.")
 
         elif action == 'start_game':
             if state["host_id"] == self.channel_name:
-                # If room has fewer players than target_players, auto-fill remaining slots with AI Bots
+                # Auto-fill any unfilled slots with AI bots up to target_players
                 while len(state["players"]) < state["target_players"]:
                     self.add_bot_sync(state)
 
@@ -201,17 +252,17 @@ class GameConsumer(AsyncWebsocketConsumer):
                 for p in state["players"]:
                     p["position"] = 1
 
-                await self.broadcast_state("Game started! All players are ready. Roll to begin! 🎲")
+                await self.broadcast_state("Game started by Admin! All players take your positions. 🎲")
 
                 # If first player is an AI Bot, trigger their turn
                 curr_player = state["players"][state["turn_index"]]
                 if curr_player["is_bot"]:
-                    asyncio.create_task(self.trigger_bot_turn())
+                    asyncio.create_task(self.trigger_bot_turn(delay=1.5))
 
         elif action == 'add_bot':
             if state["host_id"] == self.channel_name and len(state["players"]) < 4 and state["status"] == "waiting":
                 self.add_bot_sync(state)
-                await self.broadcast_state("AI Bot added to the room.")
+                await self.broadcast_state("AI Bot added to the arena.")
 
         elif action == 'remove_bot':
             if state["host_id"] == self.channel_name and state["status"] == "waiting":
@@ -222,6 +273,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                         break
 
         elif action == 'roll_dice':
+            # Block roll if game is not active
             if state["status"] != "playing" or state["rolling_lock"]:
                 return
 
@@ -229,14 +281,16 @@ class GameConsumer(AsyncWebsocketConsumer):
                 return
 
             curr_player = state["players"][state["turn_index"]]
-            if curr_player["id"] != self.channel_name:
-                return  # Block turn if not active player
+            # Allow roll if channel matches player id or in pass & play
+            is_valid_turn = (curr_player["id"] == self.channel_name) or (curr_player["id"].startswith(f"{self.channel_name}_p"))
+            if not is_valid_turn:
+                return
 
             await self.execute_roll(curr_player)
 
         elif action == 'send_reaction':
             emoji = data.get('emoji', '🔥')
-            sender = next((p for p in state["players"] if p["id"] == self.channel_name), None)
+            sender = next((p for p in state["players"] if p["id"] == self.channel_name or p["id"].startswith(f"{self.channel_name}_p")), None)
             sender_name = sender["name"] if sender else "Player"
             sender_color = sender["color"] if sender else "#38bdf8"
             
@@ -264,7 +318,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
                 curr_player = state["players"][state["turn_index"]]
                 if curr_player["is_bot"]:
-                    asyncio.create_task(self.trigger_bot_turn())
+                    asyncio.create_task(self.trigger_bot_turn(delay=1.5))
 
     def add_bot_sync(self, state):
         if len(state["players"]) >= 4:
@@ -274,7 +328,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         bot_name = BOT_NAMES[(bot_idx - 1) % len(BOT_NAMES)]
         avatar = '🤖'
 
-        # Pick color not already in use
         used_colors = [p["color"] for p in state["players"]]
         chosen_color = AVAILABLE_COLORS[len(state["players"]) % len(AVAILABLE_COLORS)]["bg"]
         for c in AVAILABLE_COLORS:
@@ -290,6 +343,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             "position": 1,
             "is_bot": True,
             "is_host": False,
+            "connected": True,
         }
         state["players"].append(bot_player)
 
@@ -332,11 +386,11 @@ class GameConsumer(AsyncWebsocketConsumer):
                 move_type = "win"
                 log_msg += f" 👑 {player['name']} reached 100 and WON THE MATCH! 🏆"
 
-        # Advance turn if game not over
+        # Advance turn
         if state["status"] != "finished":
             state["turn_index"] = (state["turn_index"] + 1) % len(state["players"])
 
-        # Broadcast the move event to EVERY connected client in real-time
+        # Broadcast move event to all connected devices in real time
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -357,14 +411,18 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         state["rolling_lock"] = False
 
-        # If next player is an AI Bot, trigger their automated turn after delay
+        # If next player is an AI Bot, automatically schedule their turn with dynamic animation-aware delay
         if state["status"] == "playing":
             next_player = state["players"][state["turn_index"]]
             if next_player["is_bot"]:
-                asyncio.create_task(self.trigger_bot_turn())
+                # Dynamic delay: dice tumble (0.8s) + hops (0.2s * count) + special (1.1s) + bot thinking (0.9s)
+                hops_count = max(0, intermediate_pos - start_pos)
+                special_delay = 1.1 if move_type in ('snake', 'ladder') else 0.2
+                calculated_delay = 0.8 + (hops_count * 0.2) + special_delay + 0.9
+                asyncio.create_task(self.trigger_bot_turn(delay=calculated_delay))
 
-    async def trigger_bot_turn(self):
-        await asyncio.sleep(2.3)
+    async def trigger_bot_turn(self, delay=2.0):
+        await asyncio.sleep(delay)
         state = ROOM_STATES.get(self.room_name)
         if not state or state["status"] != "playing":
             return
@@ -396,7 +454,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                     "color": p["color"],
                     "position": p["position"],
                     "is_bot": p["is_bot"],
-                    "is_host": p["is_host"]
+                    "is_host": p["is_host"],
+                    "connected": p.get("connected", True),
                 }
                 for p in state["players"]
             ]

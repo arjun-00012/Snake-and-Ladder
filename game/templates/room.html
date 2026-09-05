@@ -304,47 +304,75 @@
             transition: filter 0.3s ease, stroke-width 0.3s ease;
         }
         .snake-shadow {
-            stroke: rgba(0, 0, 0, 0.5);
-            stroke-width: 24;
-            filter: blur(4px);
+            stroke: rgba(0, 0, 0, 0.55);
+            stroke-width: 26;
+            filter: blur(5px);
         }
         .snake-body {
             stroke-width: 18;
         }
         .snake-pattern {
-            stroke: rgba(255, 255, 255, 0.4);
-            stroke-width: 6;
-            stroke-dasharray: 6 12;
+            stroke: rgba(255, 255, 255, 0.45);
+            stroke-width: 5;
+            stroke-dasharray: 6 14;
+        }
+
+        /* Snake Tongue Flicker */
+        @keyframes tongueFlicker {
+            0%, 100% { transform: scaleX(1) rotate(0deg); }
+            50% { transform: scaleX(1.35) rotate(5deg); }
+        }
+        .snake-tongue {
+            transform-origin: 17px 0;
+            animation: tongueFlicker 0.45s ease-in-out infinite alternate;
+        }
+
+        .snake-eye {
+            filter: drop-shadow(0 0 2px #fef08a);
         }
 
         .snake-active .snake-body {
-            stroke: #ff2a55 !important;
-            filter: drop-shadow(0 0 16px #ff2a55);
-            animation: snakePulse 0.4s ease-in-out infinite alternate;
+            stroke: #ff1a40 !important;
+            filter: drop-shadow(0 0 22px #ff1a40);
+            animation: snakePulse 0.35s ease-in-out infinite alternate;
         }
+        .snake-active .snake-head-shape {
+            fill: #ff1a40 !important;
+            filter: drop-shadow(0 0 20px #ff1a40);
+        }
+        .snake-active .snake-tongue {
+            stroke: #ffffff !important;
+            animation: tongueFlicker 0.15s ease-in-out infinite alternate;
+        }
+
         @keyframes snakePulse {
             from { stroke-width: 18; }
-            to { stroke-width: 26; }
+            to { stroke-width: 28; }
         }
 
         .ladder-rail {
-            stroke-width: 6;
+            stroke-width: 7.5;
             stroke-linecap: round;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+            filter: drop-shadow(0 5px 8px rgba(0,0,0,0.6));
         }
         .ladder-rung {
-            stroke-width: 4.5;
+            stroke-width: 5;
             stroke-linecap: round;
         }
 
         .ladder-active .ladder-rail, .ladder-active .ladder-rung {
-            stroke: #fbbf24 !important;
-            filter: drop-shadow(0 0 12px #fbbf24);
-            animation: ladderPulse 0.4s ease-in-out infinite alternate;
+            stroke: #fef08a !important;
+            filter: drop-shadow(0 0 22px #fef08a);
+            animation: ladderPulse 0.35s ease-in-out infinite alternate;
         }
+        .ladder-active .ladder-cap {
+            fill: #ffffff !important;
+            filter: drop-shadow(0 0 15px #fef08a);
+        }
+
         @keyframes ladderPulse {
             from { stroke-width: 5; }
-            to { stroke-width: 8; }
+            to { stroke-width: 9; }
         }
 
         /* Tokens Layer */
@@ -382,25 +410,36 @@
 
         @keyframes hopBounce {
             0% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -85%) scale(1.35); box-shadow: 0 14px 20px rgba(0,0,0,0.5); }
+            50% { transform: translate(-50%, -90%) scale(1.38); box-shadow: 0 16px 24px rgba(0,0,0,0.5); }
             100% { transform: translate(-50%, -50%) scale(1); }
         }
 
         .player-token.sliding {
-            transition: left 0.7s cubic-bezier(0.25, 1, 0.5, 1), top 0.7s cubic-bezier(0.25, 1, 0.5, 1);
-            animation: tokenShake 0.7s ease;
+            transition: left 0.75s cubic-bezier(0.25, 1, 0.5, 1), top 0.75s cubic-bezier(0.25, 1, 0.5, 1);
+            animation: tokenShake 0.75s ease;
         }
         @keyframes tokenShake {
             0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
-            20% { transform: translate(-50%, -50%) rotate(-15deg) scale(1.1); }
-            40% { transform: translate(-50%, -50%) rotate(15deg) scale(1.1); }
-            60% { transform: translate(-50%, -50%) rotate(-10deg); }
-            80% { transform: translate(-50%, -50%) rotate(10deg); }
+            20% { transform: translate(-50%, -50%) rotate(-18deg) scale(1.15); }
+            40% { transform: translate(-50%, -50%) rotate(18deg) scale(1.15); }
+            60% { transform: translate(-50%, -50%) rotate(-12deg); }
+            80% { transform: translate(-50%, -50%) rotate(12deg); }
         }
 
         .player-token.climbing {
-            transition: left 0.7s cubic-bezier(0.34, 1.2, 0.64, 1), top 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
-            filter: drop-shadow(0 0 12px #fbbf24);
+            transition: left 0.75s cubic-bezier(0.34, 1.2, 0.64, 1), top 0.75s cubic-bezier(0.34, 1.2, 0.64, 1);
+            filter: drop-shadow(0 0 16px #fbbf24);
+        }
+
+        .player-token.overshoot-shake {
+            animation: overshootShake 0.65s ease-in-out;
+        }
+        @keyframes overshootShake {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            20% { transform: translate(-50%, -50%) rotate(-20deg) scale(1.2); }
+            40% { transform: translate(-50%, -50%) rotate(20deg) scale(1.2); }
+            60% { transform: translate(-50%, -50%) rotate(-12deg); }
+            80% { transform: translate(-50%, -50%) rotate(12deg); }
         }
 
         .floating-reaction {
@@ -843,7 +882,7 @@
             transform: scale(1.2);
         }
 
-        /* Target players toggle for host */
+        /* Target players toggle for admin */
         .capacity-bar {
             display: flex;
             align-items: center;
@@ -1125,24 +1164,43 @@
                     <defs>
                         <!-- Gradients for Snakes -->
                         <linearGradient id="snakeGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#ef4444" />
-                            <stop offset="100%" stop-color="#7f1d1d" />
+                            <stop offset="0%" stop-color="#10b981" />
+                            <stop offset="60%" stop-color="#059669" />
+                            <stop offset="100%" stop-color="#064e3b" />
                         </linearGradient>
                         <linearGradient id="snakeGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#10b981" />
-                            <stop offset="100%" stop-color="#064e3b" />
+                            <stop offset="0%" stop-color="#f43f5e" />
+                            <stop offset="60%" stop-color="#e11d48" />
+                            <stop offset="100%" stop-color="#881337" />
                         </linearGradient>
                         <linearGradient id="snakeGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stop-color="#a855f7" />
+                            <stop offset="60%" stop-color="#7c3aed" />
                             <stop offset="100%" stop-color="#4c1d95" />
                         </linearGradient>
-
-                        <!-- Gradients for Ladders -->
-                        <linearGradient id="ladderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#fef08a" />
-                            <stop offset="50%" stop-color="#eab308" />
-                            <stop offset="100%" stop-color="#ca8a04" />
+                        <linearGradient id="snakeGrad4" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fbbf24" />
+                            <stop offset="60%" stop-color="#d97706" />
+                            <stop offset="100%" stop-color="#78350f" />
                         </linearGradient>
+
+                        <!-- Gradients for 3D Ladders -->
+                        <linearGradient id="ladderRailGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#fef08a" />
+                            <stop offset="45%" stop-color="#eab308" />
+                            <stop offset="85%" stop-color="#ca8a04" />
+                            <stop offset="100%" stop-color="#854d0e" />
+                        </linearGradient>
+                        <linearGradient id="ladderRungGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#fef9c3" />
+                            <stop offset="40%" stop-color="#facc15" />
+                            <stop offset="100%" stop-color="#b45309" />
+                        </linearGradient>
+                        <radialGradient id="ladderCapGrad" cx="35%" cy="35%" r="65%">
+                            <stop offset="0%" stop-color="#ffffff" />
+                            <stop offset="40%" stop-color="#fde047" />
+                            <stop offset="100%" stop-color="#ca8a04" />
+                        </radialGradient>
                     </defs>
 
                     <!-- Group for Ladder elements -->
@@ -1220,7 +1278,7 @@
     <div class="lobby-overlay" id="lobby-overlay">
         <div class="lobby-modal">
             <h2 class="lobby-title">Match Lobby</h2>
-            <p class="lobby-subtitle">Share room code or invite friends to join on their laptops / devices</p>
+            <p class="lobby-subtitle" id="lobby-subtitle-text">Share room code or invite friends to join the arena</p>
 
             <div class="share-box">
                 <div>
@@ -1243,9 +1301,9 @@
                 </div>
             </div>
 
-            <!-- Host Target Players Control -->
+            <!-- Admin Target Players Control -->
             <div class="capacity-bar" id="host-capacity-bar" style="display:none;">
-                <span style="font-size:0.85rem; font-weight:700; color:#94a3b8;">Players Needed:</span>
+                <span style="font-size:0.85rem; font-weight:700; color:#94a3b8;">Admin: Players Needed</span>
                 <div class="capacity-buttons">
                     <button class="cap-btn" id="cap-btn-2" onclick="setTargetPlayers(2)">2 Players</button>
                     <button class="cap-btn" id="cap-btn-3" onclick="setTargetPlayers(3)">3 Players</button>
@@ -1258,7 +1316,7 @@
 
             <div class="lobby-controls" id="lobby-host-controls" style="display:none;">
                 <button class="btn-start-game" id="start-game-btn" onclick="startGame()">
-                    <span>🚀 START GAME</span>
+                    <span>🚀 START GAME (AS ADMIN)</span>
                 </button>
                 <div class="btn-bot-row">
                     <button class="btn-secondary" onclick="addBot()">+ Add AI Bot 🤖</button>
@@ -1269,7 +1327,7 @@
             <div id="lobby-guest-controls" style="display:none;">
                 <div class="guest-waiting-text">
                     <span style="display:inline-block; animation: hopBounce 1s infinite;">⏳</span>
-                    Waiting for Host to start the match...
+                    Waiting for Admin to start the match...
                 </div>
             </div>
         </div>
@@ -1298,7 +1356,6 @@
         const myTarget = parseInt("{{ default_target|escapejs }}") || 2;
         const myMode = "{{ default_mode|escapejs }}";
 
-        // WebSocket Setup (Auto supports Render wss:// & ws://)
         const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
         const wsUrl = `${wsScheme}://${window.location.host}/ws/game/${roomCode}/`;
         const socket = new WebSocket(wsUrl);
@@ -1309,6 +1366,7 @@
         let snakesMap = {};
         let laddersMap = {};
         let soundEnabled = true;
+        let activeAnimatingPlayerId = null;
 
         // Web Audio Synthesizer
         const AudioEngine = {
@@ -1332,13 +1390,13 @@
                 const gain = this.ctx.createGain();
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(320, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(540, this.ctx.currentTime + 0.08);
-                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.frequency.exponentialRampToValueAtTime(560, this.ctx.currentTime + 0.09);
+                gain.gain.setValueAtTime(0.16, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.09);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
                 osc.start();
-                osc.stop(this.ctx.currentTime + 0.08);
+                osc.stop(this.ctx.currentTime + 0.09);
             },
             playDice() {
                 if (!soundEnabled) return;
@@ -1350,7 +1408,7 @@
                         const osc = this.ctx.createOscillator();
                         const gain = this.ctx.createGain();
                         osc.type = 'triangle';
-                        osc.frequency.setValueAtTime(160 + Math.random() * 80, this.ctx.currentTime);
+                        osc.frequency.setValueAtTime(160 + Math.random() * 90, this.ctx.currentTime);
                         gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
                         gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.06);
                         osc.connect(gain);
@@ -1367,20 +1425,20 @@
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(450, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(90, this.ctx.currentTime + 0.55);
-                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.55);
+                osc.frequency.setValueAtTime(460, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.6);
+                gain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.6);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
                 osc.start();
-                osc.stop(this.ctx.currentTime + 0.55);
+                osc.stop(this.ctx.currentTime + 0.6);
             },
             playLadder() {
                 if (!soundEnabled) return;
                 this.init();
                 if (!this.ctx) return;
-                const notes = [261.63, 329.63, 392.00, 523.25, 659.25];
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
                 notes.forEach((freq, idx) => {
                     setTimeout(() => {
                         if (!this.ctx) return;
@@ -1388,20 +1446,36 @@
                         const gain = this.ctx.createGain();
                         osc.type = 'triangle';
                         osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                        gain.gain.setValueAtTime(0.16, this.ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
+                        gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
                         osc.connect(gain);
                         gain.connect(this.ctx.destination);
                         osc.start();
-                        osc.stop(this.ctx.currentTime + 0.18);
-                    }, idx * 90);
+                        osc.stop(this.ctx.currentTime + 0.2);
+                    }, idx * 85);
                 });
+            },
+            playOvershoot() {
+                if (!soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(240, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(110, this.ctx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.3);
             },
             playVictory() {
                 if (!soundEnabled) return;
                 this.init();
                 if (!this.ctx) return;
-                const fanfare = [392.00, 523.25, 659.25, 783.99];
+                const fanfare = [392.00, 523.25, 659.25, 783.99, 1046.50];
                 fanfare.forEach((f, i) => {
                     setTimeout(() => {
                         if (!this.ctx) return;
@@ -1409,13 +1483,13 @@
                         const gain = this.ctx.createGain();
                         osc.type = 'sine';
                         osc.frequency.setValueAtTime(f, this.ctx.currentTime);
-                        gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+                        gain.gain.setValueAtTime(0.28, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
                         osc.connect(gain);
                         gain.connect(this.ctx.destination);
                         osc.start();
-                        osc.stop(this.ctx.currentTime + 0.4);
-                    }, i * 140);
+                        osc.stop(this.ctx.currentTime + 0.45);
+                    }, i * 130);
                 });
             }
         };
@@ -1427,7 +1501,7 @@
             showToast(soundEnabled ? 'Sound Enabled' : 'Sound Muted');
         }
 
-        // Generate 10x10 Grid
+        // Generate 10x10 Grid (Boustrophedon 1 to 100)
         function initGrid() {
             const grid = document.getElementById('grid-board');
             grid.innerHTML = '';
@@ -1480,13 +1554,14 @@
             };
         }
 
+        // Render Snakes & Ladders Graphics
         function renderBoardDecorations() {
             const snakesGroup = document.getElementById('snakes-group');
             const laddersGroup = document.getElementById('ladders-group');
             snakesGroup.innerHTML = '';
             laddersGroup.innerHTML = '';
 
-            // Draw Ladders
+            // 1. Draw 3D Ladders
             for (const [baseStr, topStr] of Object.entries(laddersMap)) {
                 const base = parseInt(baseStr);
                 const top = parseInt(topStr);
@@ -1504,17 +1579,39 @@
                 const dist = Math.hypot(dx, dy);
                 const ux = -dy / dist;
                 const uy = dx / dist;
-                const railOffset = 14;
+                const railOffset = 15;
 
                 const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 g.id = `ladder-${base}-${top}`;
 
+                // Drop Shadow Under Rails
+                const railShadow1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                railShadow1.setAttribute('x1', pBase.x - ux * railOffset);
+                railShadow1.setAttribute('y1', pBase.y - uy * railOffset + 4);
+                railShadow1.setAttribute('x2', pTop.x - ux * railOffset);
+                railShadow1.setAttribute('y2', pTop.y - uy * railOffset + 4);
+                railShadow1.setAttribute('stroke', 'rgba(0,0,0,0.5)');
+                railShadow1.setAttribute('stroke-width', '8');
+                railShadow1.setAttribute('stroke-linecap', 'round');
+                g.appendChild(railShadow1);
+
+                const railShadow2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                railShadow2.setAttribute('x1', pBase.x + ux * railOffset);
+                railShadow2.setAttribute('y1', pBase.y + uy * railOffset + 4);
+                railShadow2.setAttribute('x2', pTop.x + ux * railOffset);
+                railShadow2.setAttribute('y2', pTop.y + uy * railOffset + 4);
+                railShadow2.setAttribute('stroke', 'rgba(0,0,0,0.5)');
+                railShadow2.setAttribute('stroke-width', '8');
+                railShadow2.setAttribute('stroke-linecap', 'round');
+                g.appendChild(railShadow2);
+
+                // Main Rails with 3D gradient
                 const rail1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 rail1.setAttribute('x1', pBase.x - ux * railOffset);
                 rail1.setAttribute('y1', pBase.y - uy * railOffset);
                 rail1.setAttribute('x2', pTop.x - ux * railOffset);
                 rail1.setAttribute('y2', pTop.y - uy * railOffset);
-                rail1.setAttribute('stroke', 'url(#ladderGrad)');
+                rail1.setAttribute('stroke', 'url(#ladderRailGrad)');
                 rail1.setAttribute('class', 'ladder-rail');
 
                 const rail2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -1522,33 +1619,94 @@
                 rail2.setAttribute('y1', pBase.y + uy * railOffset);
                 rail2.setAttribute('x2', pTop.x + ux * railOffset);
                 rail2.setAttribute('y2', pTop.y + uy * railOffset);
-                rail2.setAttribute('stroke', 'url(#ladderGrad)');
+                rail2.setAttribute('stroke', 'url(#ladderRailGrad)');
                 rail2.setAttribute('class', 'ladder-rail');
+
+                // Reflection Highlights
+                const railHl1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                railHl1.setAttribute('x1', pBase.x - ux * (railOffset + 1));
+                railHl1.setAttribute('y1', pBase.y - uy * (railOffset + 1));
+                railHl1.setAttribute('x2', pTop.x - ux * (railOffset + 1));
+                railHl1.setAttribute('y2', pTop.y - uy * (railOffset + 1));
+                railHl1.setAttribute('stroke', 'rgba(255,255,255,0.4)');
+                railHl1.setAttribute('stroke-width', '1.8');
+                railHl1.setAttribute('stroke-linecap', 'round');
+
+                const railHl2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                railHl2.setAttribute('x1', pBase.x + ux * (railOffset - 1));
+                railHl2.setAttribute('y1', pBase.y + uy * (railOffset - 1));
+                railHl2.setAttribute('x2', pTop.x + ux * (railOffset - 1));
+                railHl2.setAttribute('y2', pTop.y + uy * (railOffset - 1));
+                railHl2.setAttribute('stroke', 'rgba(255,255,255,0.4)');
+                railHl2.setAttribute('stroke-width', '1.8');
+                railHl2.setAttribute('stroke-linecap', 'round');
 
                 g.appendChild(rail1);
                 g.appendChild(rail2);
+                g.appendChild(railHl1);
+                g.appendChild(railHl2);
 
-                const rungsCount = Math.max(3, Math.floor(dist / 40));
+                // Ladder Rungs
+                const rungsCount = Math.max(3, Math.floor(dist / 38));
                 for (let r = 1; r <= rungsCount; r++) {
                     const t = r / (rungsCount + 1);
                     const rx = pBase.x + dx * t;
                     const ry = pBase.y + dy * t;
+
+                    // Shadow rung
+                    const rungShadow = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    rungShadow.setAttribute('x1', rx - ux * railOffset);
+                    rungShadow.setAttribute('y1', ry - uy * railOffset + 2);
+                    rungShadow.setAttribute('x2', rx + ux * railOffset);
+                    rungShadow.setAttribute('y2', ry + uy * railOffset + 2);
+                    rungShadow.setAttribute('stroke', 'rgba(0,0,0,0.4)');
+                    rungShadow.setAttribute('stroke-width', '5');
+                    g.appendChild(rungShadow);
+
+                    // Main Rung
                     const rung = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     rung.setAttribute('x1', rx - ux * railOffset);
                     rung.setAttribute('y1', ry - uy * railOffset);
                     rung.setAttribute('x2', rx + ux * railOffset);
                     rung.setAttribute('y2', ry + uy * railOffset);
-                    rung.setAttribute('stroke', 'url(#ladderGrad)');
+                    rung.setAttribute('stroke', 'url(#ladderRungGrad)');
                     rung.setAttribute('class', 'ladder-rung');
                     g.appendChild(rung);
+
+                    // Metallic end brackets / bolts
+                    [-railOffset, railOffset].forEach(offset => {
+                        const bolt = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        bolt.setAttribute('cx', rx + ux * offset);
+                        bolt.setAttribute('cy', ry + uy * offset);
+                        bolt.setAttribute('r', '2.5');
+                        bolt.setAttribute('fill', '#ca8a04');
+                        bolt.setAttribute('stroke', '#ffffff');
+                        bolt.setAttribute('stroke-width', '0.6');
+                        g.appendChild(bolt);
+                    });
                 }
+
+                // Spherical Golden Top Caps
+                [-railOffset, railOffset].forEach(offset => {
+                    const topCap = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    topCap.setAttribute('cx', pTop.x + ux * offset);
+                    topCap.setAttribute('cy', pTop.y + uy * offset);
+                    topCap.setAttribute('r', '5.5');
+                    topCap.setAttribute('fill', 'url(#ladderCapGrad)');
+                    topCap.setAttribute('stroke', '#fef08a');
+                    topCap.setAttribute('stroke-width', '1');
+                    topCap.setAttribute('class', 'ladder-cap');
+                    g.appendChild(topCap);
+                });
 
                 laddersGroup.appendChild(g);
             }
 
-            // Draw Snakes
-            const snakeGrads = ['url(#snakeGrad1)', 'url(#snakeGrad2)', 'url(#snakeGrad3)'];
+            // 2. Draw Organic Serpentine Snakes
+            const snakeGrads = ['url(#snakeGrad1)', 'url(#snakeGrad2)', 'url(#snakeGrad3)', 'url(#snakeGrad4)'];
+            const snakeHeadColors = ['#059669', '#e11d48', '#7c3aed', '#d97706'];
             let sIdx = 0;
+
             for (const [headStr, tailStr] of Object.entries(snakesMap)) {
                 const head = parseInt(headStr);
                 const tail = parseInt(tailStr);
@@ -1564,66 +1722,169 @@
                 const dx = pTail.x - pHead.x;
                 const dy = pTail.y - pHead.y;
                 const dist = Math.hypot(dx, dy);
-                const waveAmp = Math.min(45, dist * 0.16) * (sIdx % 2 === 0 ? 1 : -1);
                 const ux = -dy / dist;
                 const uy = dx / dist;
 
-                const cp1x = pHead.x + dx * 0.33 + ux * waveAmp;
-                const cp1y = pHead.y + dy * 0.33 + uy * waveAmp;
-                const cp2x = pHead.x + dx * 0.66 - ux * waveAmp;
-                const cp2y = pHead.y + dy * 0.66 - uy * waveAmp;
+                // Build multi-wave points for organic serpentine curve
+                const numSegments = Math.max(3, Math.min(6, Math.floor(dist / 125)));
+                const pts = [{ x: pHead.x, y: pHead.y }];
 
-                const pathData = `M ${pHead.x} ${pHead.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${pTail.x} ${pTail.y}`;
+                for (let i = 1; i < numSegments; i++) {
+                    const t = i / numSegments;
+                    const waveSide = (i % 2 === 1) ? 1 : -1;
+                    const amp = waveSide * Math.min(36, dist * 0.15) * (sIdx % 2 === 0 ? 1 : -0.9);
+                    pts.push({
+                        x: pHead.x + dx * t + ux * amp,
+                        y: pHead.y + dy * t + uy * amp
+                    });
+                }
+                pts.push({ x: pTail.x, y: pTail.y });
+
+                // Construct smooth cubic Bezier path through pts
+                let pathData = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+                for (let i = 0; i < pts.length - 1; i++) {
+                    const p0 = (i > 0) ? pts[i - 1] : pts[i];
+                    const p1 = pts[i];
+                    const p2 = pts[i + 1];
+                    const p3 = (i < pts.length - 2) ? pts[i + 2] : p2;
+
+                    const cp1x = p1.x + (p2.x - p0.x) * 0.28;
+                    const cp1y = p1.y + (p2.y - p0.y) * 0.28;
+                    const cp2x = p2.x - (p3.x - p1.x) * 0.28;
+                    const cp2y = p2.y - (p3.y - p1.y) * 0.28;
+
+                    pathData += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+                }
 
                 const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 g.id = `snake-${head}-${tail}`;
 
+                // Snake shadow
                 const shadow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 shadow.setAttribute('d', pathData);
                 shadow.setAttribute('class', 'snake-path snake-shadow');
 
+                // Snake main body
                 const body = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 body.setAttribute('d', pathData);
                 body.setAttribute('stroke', snakeGrads[sIdx % snakeGrads.length]);
                 body.setAttribute('class', 'snake-path snake-body');
 
+                // Reptile scales pattern line
                 const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 pattern.setAttribute('d', pathData);
                 pattern.setAttribute('class', 'snake-path snake-pattern');
 
-                const headCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                headCircle.setAttribute('cx', pHead.x);
-                headCircle.setAttribute('cy', pHead.y);
-                headCircle.setAttribute('r', '14');
-                headCircle.setAttribute('fill', '#ef4444');
-                headCircle.setAttribute('stroke', '#ffffff');
-                headCircle.setAttribute('stroke-width', '2');
-
-                const eye1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                eye1.setAttribute('cx', pHead.x - 4);
-                eye1.setAttribute('cy', pHead.y - 3);
-                eye1.setAttribute('r', '2.5');
-                eye1.setAttribute('fill', '#facc15');
-
-                const eye2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                eye2.setAttribute('cx', pHead.x + 4);
-                eye2.setAttribute('cy', pHead.y - 3);
-                eye2.setAttribute('r', '2.5');
-                eye2.setAttribute('fill', '#facc15');
-
                 g.appendChild(shadow);
                 g.appendChild(body);
                 g.appendChild(pattern);
-                g.appendChild(headCircle);
-                g.appendChild(eye1);
-                g.appendChild(eye2);
 
+                // Tail Rattle / Tip
+                const tailTip = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                tailTip.setAttribute('cx', pTail.x);
+                tailTip.setAttribute('cy', pTail.y);
+                tailTip.setAttribute('r', '5.5');
+                tailTip.setAttribute('fill', '#ca8a04');
+                tailTip.setAttribute('stroke', '#ffffff');
+                tailTip.setAttribute('stroke-width', '1.2');
+                g.appendChild(tailTip);
+
+                // Compute Snake Head Rotation Angle relative to first curve segment
+                const headAngle = Math.atan2(pts[0].y - pts[1].y, pts[0].x - pts[1].x) * (180 / Math.PI);
+
+                // Rotated Snake Head Group
+                const headGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                headGroup.setAttribute('transform', `translate(${pHead.x}, ${pHead.y}) rotate(${headAngle})`);
+
+                // Ambient Head Glow
+                const headAura = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                headAura.setAttribute('cx', '3');
+                headAura.setAttribute('cy', '0');
+                headAura.setAttribute('r', '17');
+                headAura.setAttribute('fill', 'rgba(239, 68, 68, 0.2)');
+
+                // Sculpted Viper Head Contour
+                const headShape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                headShape.setAttribute('d', 'M 18 0 C 14 9, 3 13, -9 9 C -15 6, -16 0, -15 -6 C -9 -13, 3 -9, 18 0 Z');
+                headShape.setAttribute('fill', snakeHeadColors[sIdx % snakeHeadColors.length]);
+                headShape.setAttribute('stroke', '#ffffff');
+                headShape.setAttribute('stroke-width', '1.8');
+                headShape.setAttribute('class', 'snake-head-shape');
+
+                // Skull scale highlight
+                const headScales = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                headScales.setAttribute('points', '8,0 2,3 -4,0 2,-3');
+                headScales.setAttribute('fill', 'rgba(255,255,255,0.4)');
+
+                // Glowing Slit Eyes
+                const eye1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                eye1.setAttribute('cx', '6');
+                eye1.setAttribute('cy', '-5.5');
+                eye1.setAttribute('r', '3');
+                eye1.setAttribute('fill', '#facc15');
+                eye1.setAttribute('class', 'snake-eye');
+
+                const eyeSlit1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                eyeSlit1.setAttribute('x1', '6');
+                eyeSlit1.setAttribute('y1', '-7.8');
+                eyeSlit1.setAttribute('x2', '6');
+                eyeSlit1.setAttribute('y2', '-3.2');
+                eyeSlit1.setAttribute('stroke', '#0f172a');
+                eyeSlit1.setAttribute('stroke-width', '1.4');
+                eyeSlit1.setAttribute('stroke-linecap', 'round');
+
+                const eye2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                eye2.setAttribute('cx', '6');
+                eye2.setAttribute('cy', '5.5');
+                eye2.setAttribute('r', '3');
+                eye2.setAttribute('fill', '#facc15');
+                eye2.setAttribute('class', 'snake-eye');
+
+                const eyeSlit2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                eyeSlit2.setAttribute('x1', '6');
+                eyeSlit2.setAttribute('y1', '3.2');
+                eyeSlit2.setAttribute('x2', '6');
+                eyeSlit2.setAttribute('y2', '7.8');
+                eyeSlit2.setAttribute('stroke', '#0f172a');
+                eyeSlit2.setAttribute('stroke-width', '1.4');
+                eyeSlit2.setAttribute('stroke-linecap', 'round');
+
+                // Sharp White Viper Fangs
+                const fang1 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                fang1.setAttribute('points', '14,-4 18,-3 14,-2');
+                fang1.setAttribute('fill', '#ffffff');
+
+                const fang2 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                fang2.setAttribute('points', '14,2 18,3 14,4');
+                fang2.setAttribute('fill', '#ffffff');
+
+                // Forked Red Flickering Tongue
+                const tongue = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                tongue.setAttribute('d', 'M 17 0 L 27 0 L 32 -3.5 M 27 0 L 32 3.5');
+                tongue.setAttribute('stroke', '#ef4444');
+                tongue.setAttribute('stroke-width', '2');
+                tongue.setAttribute('fill', 'none');
+                tongue.setAttribute('stroke-linecap', 'round');
+                tongue.setAttribute('class', 'snake-tongue');
+
+                headGroup.appendChild(headAura);
+                headGroup.appendChild(headShape);
+                headGroup.appendChild(headScales);
+                headGroup.appendChild(eye1);
+                headGroup.appendChild(eyeSlit1);
+                headGroup.appendChild(eye2);
+                headGroup.appendChild(eyeSlit2);
+                headGroup.appendChild(fang1);
+                headGroup.appendChild(fang2);
+                headGroup.appendChild(tongue);
+
+                g.appendChild(headGroup);
                 snakesGroup.appendChild(g);
                 sIdx++;
             }
         }
 
-        // Render & Reposition Player Tokens
+        // Render Player Tokens
         function renderTokens(players) {
             const container = document.getElementById('tokens-layer');
             const wrapper = document.getElementById('board-wrapper');
@@ -1631,12 +1892,10 @@
             const scale = wrapperWidth / 1000;
 
             const activeIds = new Set(players.map(p => `token-${p.id}`));
-            // Remove disconnected player tokens
             document.querySelectorAll('.player-token').forEach(el => {
                 if (!activeIds.has(el.id)) el.remove();
             });
 
-            // Group players by position
             const posMap = {};
             players.forEach(p => {
                 if (!posMap[p.position]) posMap[p.position] = [];
@@ -1644,6 +1903,9 @@
             });
 
             players.forEach(player => {
+                // IMPORTANT: Do NOT snap the token of the player who is currently in the middle of a hop or slide animation!
+                if (player.id === activeAnimatingPlayerId) return;
+
                 let token = document.getElementById(`token-${player.id}`);
                 if (!token) {
                     token = document.createElement('div');
@@ -1675,35 +1937,64 @@
             });
         }
 
-        // Animate Step-by-Step Movement across all connected laptops
+        // Sequential Move Event Queue to prevent animation clashing
+        const moveEventQueue = [];
+        let isProcessingMove = false;
+
+        async function enqueueMoveEvent(eventData) {
+            moveEventQueue.push(eventData);
+            if (isProcessingMove) return;
+            isProcessingMove = true;
+            while (moveEventQueue.length > 0) {
+                const nextEvent = moveEventQueue.shift();
+                addLog(nextEvent.log, true);
+                await animatePlayerMove(nextEvent);
+                updateUIState(nextEvent.state);
+            }
+            isProcessingMove = false;
+        }
+
+        // Animate Step-by-Step Movement
         async function animatePlayerMove(eventData) {
             const { player_id, start_pos, intermediate_pos, final_pos, move_type, dice } = eventData;
+            activeAnimatingPlayerId = player_id;
+
             const token = document.getElementById(`token-${player_id}`);
             const wrapper = document.getElementById('board-wrapper');
             const scale = wrapper.clientWidth / 1000;
 
-            // 1. Animate 3D Dice Roll
+            // 1. Dice Roll Animation
             animate3DDice(dice);
             AudioEngine.playDice();
 
-            await new Promise(r => setTimeout(r, 700));
+            await new Promise(r => setTimeout(r, 680));
 
-            // 2. Step-by-Step Hop
+            // 2. Step-by-Step Hops
             if (token && intermediate_pos > start_pos) {
                 for (let step = start_pos + 1; step <= intermediate_pos; step++) {
                     const coords = getTileCoords(step);
+                    token.classList.remove('hopping');
+                    void token.offsetWidth; // Force DOM reflow so bounce animation triggers on EVERY hop
                     token.classList.add('hopping');
                     token.style.left = `${coords.x * scale}px`;
                     token.style.top = `${coords.y * scale}px`;
                     AudioEngine.playHop();
-                    await new Promise(r => setTimeout(r, 180));
-                    token.classList.remove('hopping');
+                    await new Promise(r => setTimeout(r, 200));
                 }
+                token.classList.remove('hopping');
             }
 
-            // 3. Snake / Ladder Interaction
+            // 3. Overshoot Feedback
+            if (move_type === 'overshoot' && token) {
+                AudioEngine.playOvershoot();
+                token.classList.add('overshoot-shake');
+                await new Promise(r => setTimeout(r, 650));
+                token.classList.remove('overshoot-shake');
+            }
+
+            // 4. Snake / Ladder Interaction
             if (move_type === 'snake') {
-                await new Promise(r => setTimeout(r, 350));
+                await new Promise(r => setTimeout(r, 320));
                 AudioEngine.playSnake();
 
                 const snakeElem = document.getElementById(`snake-${intermediate_pos}-${final_pos}`);
@@ -1716,12 +2007,12 @@
                     token.style.top = `${targetCoords.y * scale}px`;
                 }
 
-                await new Promise(r => setTimeout(r, 750));
+                await new Promise(r => setTimeout(r, 780));
                 if (snakeElem) snakeElem.classList.remove('snake-active');
                 if (token) token.classList.remove('sliding');
 
             } else if (move_type === 'ladder') {
-                await new Promise(r => setTimeout(r, 350));
+                await new Promise(r => setTimeout(r, 320));
                 AudioEngine.playLadder();
 
                 const ladderElem = document.getElementById(`ladder-${intermediate_pos}-${final_pos}`);
@@ -1734,13 +2025,15 @@
                     token.style.top = `${targetCoords.y * scale}px`;
                 }
 
-                await new Promise(r => setTimeout(r, 750));
+                await new Promise(r => setTimeout(r, 780));
                 if (ladderElem) ladderElem.classList.remove('ladder-active');
                 if (token) token.classList.remove('climbing');
 
             } else if (move_type === 'win') {
                 triggerVictory(eventData.player_name);
             }
+
+            activeAnimatingPlayerId = null;
 
             if (eventData.state && eventData.state.players) {
                 renderTokens(eventData.state.players);
@@ -1778,13 +2071,15 @@
                 const hostControls = document.getElementById('lobby-host-controls');
                 const guestControls = document.getElementById('lobby-guest-controls');
                 const hostCapBar = document.getElementById('host-capacity-bar');
+                const lobbySubtitle = document.getElementById('lobby-subtitle-text');
+
+                lobbySubtitle.innerText = `Joined: ${state.players.length} / ${state.target_players || 2} Players. Waiting for all players to enter.`;
 
                 if (isHost) {
                     hostControls.style.display = 'flex';
                     guestControls.style.display = 'none';
                     hostCapBar.style.display = 'flex';
 
-                    // Highlight active capacity button
                     [2, 3, 4].forEach(c => {
                         const btn = document.getElementById(`cap-btn-${c}`);
                         if (btn) btn.classList.toggle('active', (state.target_players || 2) === c);
@@ -1795,8 +2090,8 @@
                     hostCapBar.style.display = 'none';
                 }
 
-                // Update my selected color in mini swatch
-                const myPlayer = state.players.find(p => p.id === myId);
+                // Update active color swatch
+                const myPlayer = state.players.find(p => p.id === myId || p.id.startsWith(`${myId}_p`));
                 if (myPlayer) {
                     myChosenColor = myPlayer.color;
                     document.querySelectorAll('.mini-swatch').forEach(sw => {
@@ -1814,6 +2109,7 @@
 
             state.players.forEach(p => {
                 const isCurrent = (p.id === state.current_turn_id);
+                const isMe = (p.id === myId || p.id.startsWith(`${myId}_p`));
                 const row = document.createElement('div');
                 row.className = `player-row ${isCurrent ? 'active-turn' : ''}`;
                 row.innerHTML = `
@@ -1821,8 +2117,8 @@
                         <div class="player-color-dot" style="background:${p.color}"></div>
                         <span style="font-size:1.3rem;">${p.avatar}</span>
                         <div>
-                            <div class="player-name-text" style="color:${p.color}">${p.name} ${p.is_bot ? '🤖' : ''} ${p.is_host ? '👑' : ''}</div>
-                            <div style="font-size:0.75rem; color:#64748b;">${p.id === myId ? '(You)' : ''}</div>
+                            <div class="player-name-text" style="color:${p.color}">${p.name} ${p.is_bot ? '🤖' : ''} ${p.is_host ? '👑 Admin' : ''}</div>
+                            <div style="font-size:0.75rem; color:#64748b;">${isMe ? '(You)' : ''} ${p.connected === false ? '(Disconnected)' : ''}</div>
                         </div>
                     </div>
                     <div class="player-pos-badge" style="color:${p.color}; border: 1px solid ${p.color}40;">Tile ${p.position}</div>
@@ -1843,8 +2139,14 @@
                 turnAvatar.style.borderColor = activePlayer.color;
             }
 
-            const isMyTurn = (state.status === 'playing' && state.current_turn_id === myId);
-            if (isMyTurn) {
+            const isMyTurn = (state.status === 'playing' && (state.current_turn_id === myId || (state.current_turn_id && state.current_turn_id.startsWith(`${myId}_p`))));
+            
+            if (state.status === 'waiting') {
+                turnCard.classList.remove('my-turn');
+                rollBtn.disabled = true;
+                rollBtn.classList.remove('pulse');
+                rollBtn.innerText = "🔒 WAITING FOR ADMIN TO START";
+            } else if (isMyTurn) {
                 turnCard.classList.add('my-turn');
                 rollBtn.disabled = false;
                 rollBtn.classList.add('pulse');
@@ -1853,9 +2155,7 @@
                 turnCard.classList.remove('my-turn');
                 rollBtn.disabled = true;
                 rollBtn.classList.remove('pulse');
-                rollBtn.innerText = state.status === 'playing' 
-                    ? `Waiting for ${state.current_turn_name}...` 
-                    : "🎲 ROLL DICE";
+                rollBtn.innerText = `Waiting for ${state.current_turn_name}...`;
             }
 
             renderTokens(state.players);
@@ -1875,12 +2175,13 @@
                 const slot = document.createElement('div');
                 if (i < players.length) {
                     const p = players[i];
+                    const isMe = (p.id === myId || p.id.startsWith(`${myId}_p`));
                     slot.className = 'lobby-slot occupied';
                     slot.innerHTML = `
                         <div class="slot-avatar">${p.avatar}</div>
-                        <div class="slot-name" style="color:${p.color}">${p.name} ${p.id === myId ? '(You)' : ''}</div>
+                        <div class="slot-name" style="color:${p.color}">${p.name} ${isMe ? '(You)' : ''}</div>
                         <span class="slot-tag ${p.is_host ? 'host' : ''}">
-                            ${p.is_host ? '👑 Host' : (p.is_bot ? '🤖 AI Bot' : 'Ready')}
+                            ${p.is_host ? '👑 Admin' : (p.is_bot ? '🤖 AI Bot' : 'Ready')}
                         </span>
                     `;
                 } else {
@@ -1947,9 +2248,7 @@
                 if (data.log) addLog(data.log);
             } 
             else if (data.type === 'move_event') {
-                addLog(data.log, true);
-                animatePlayerMove(data);
-                updateUIState(data.state);
+                enqueueMoveEvent(data);
             } 
             else if (data.type === 'reaction_event') {
                 showFloatingReaction(data.emoji, data.sender_name);

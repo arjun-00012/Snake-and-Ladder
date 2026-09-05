@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snakes & Ladders - Multiplayer Battle Arena</title>
+    <title>Snakes & Ladders - Realtime Multiplayer Arena</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,7 +11,9 @@
         :root {
             --bg-primary: #090d16;
             --bg-card: rgba(18, 24, 38, 0.88);
+            --bg-card-sub: rgba(15, 23, 42, 0.7);
             --border: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(56, 189, 248, 0.4);
             --accent-blue: #38bdf8;
             --accent-emerald: #10b981;
             --accent-amber: #f59e0b;
@@ -34,103 +36,132 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            padding: 24px 16px;
+            padding: 32px 16px;
             overflow-x: hidden;
             position: relative;
         }
 
+        /* Ambient Background Glow */
         .bg-glow-1 {
-            position: absolute;
-            top: 10%;
-            left: 15%;
-            width: 450px;
-            height: 450px;
-            background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
-            filter: blur(60px);
+            position: fixed;
+            top: 5%;
+            left: 10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
+            filter: blur(80px);
             z-index: 0;
             pointer-events: none;
-            animation: pulseGlow 12s ease-in-out infinite alternate;
         }
 
         .bg-glow-2 {
-            position: absolute;
-            bottom: 10%;
-            right: 15%;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
-            filter: blur(70px);
+            position: fixed;
+            bottom: 5%;
+            right: 10%;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);
+            filter: blur(90px);
             z-index: 0;
             pointer-events: none;
-            animation: pulseGlow 14s ease-in-out infinite alternate-reverse;
         }
 
-        @keyframes pulseGlow {
-            0% { transform: scale(1) translate(0, 0); }
-            100% { transform: scale(1.2) translate(30px, -20px); }
-        }
-
-        .main-wrapper {
+        .container {
             position: relative;
             z-index: 10;
-            max-width: 560px;
+            max-width: 680px;
             width: 100%;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .logo-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 14px;
+            padding: 6px 16px;
             background: rgba(56, 189, 248, 0.12);
             border: 1px solid rgba(56, 189, 248, 0.3);
             border-radius: 9999px;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 700;
             color: var(--accent-blue);
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            letter-spacing: 0.75px;
             text-transform: uppercase;
         }
 
         .main-title {
             font-family: 'Outfit', sans-serif;
-            font-size: 2.8rem;
+            font-size: 3rem;
             font-weight: 900;
             line-height: 1.1;
             letter-spacing: -0.5px;
             background: linear-gradient(135deg, #ffffff 30%, #38bdf8 70%, #a855f7 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .subtitle {
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 1.05rem;
             font-weight: 500;
         }
 
-        .lobby-card {
+        /* Tabs Navigation */
+        .tabs-nav {
+            display: flex;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 6px;
+            margin-bottom: 20px;
+            gap: 6px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #2563eb, #38bdf8);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        }
+
+        /* Glassmorphism Main Card */
+        .main-card {
             background: var(--bg-card);
             backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border);
             border-radius: 24px;
             padding: 28px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            margin-bottom: 28px;
         }
 
         .section-label {
             display: block;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.75px;
@@ -139,7 +170,7 @@
         }
 
         .input-group {
-            margin-bottom: 16px;
+            margin-bottom: 18px;
         }
 
         .name-row {
@@ -262,13 +293,13 @@
         }
 
         .player-count-btn {
-            padding: 10px;
+            padding: 12px;
             background: rgba(15, 23, 42, 0.6);
             border: 1.5px solid var(--border);
             color: var(--text-main);
             border-radius: 12px;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             cursor: pointer;
             transition: all 0.2s ease;
             text-align: center;
@@ -285,27 +316,59 @@
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
         }
 
-        /* Action Buttons */
-        .action-cards {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 18px;
+        /* Mode Selector Radio Cards */
+        .mode-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
         }
 
+        .mode-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mode-card:hover {
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .mode-card.active {
+            border-color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent-blue);
+        }
+
+        .mode-icon {
+            font-size: 1.4rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .mode-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        /* Action Buttons */
         .btn-primary {
             width: 100%;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #2563eb, #38bdf8);
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #059669, #10b981);
             color: #ffffff;
             border: none;
             border-radius: 14px;
             font-family: 'Outfit', sans-serif;
-            font-size: 1.05rem;
-            font-weight: 700;
+            font-size: 1.15rem;
+            font-weight: 800;
             letter-spacing: 0.3px;
             cursor: pointer;
-            box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.5);
+            box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.5);
             transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             display: flex;
             align-items: center;
@@ -315,91 +378,89 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 25px -4px rgba(37, 99, 235, 0.65);
+            box-shadow: 0 12px 25px -4px rgba(16, 185, 129, 0.65);
             filter: brightness(1.08);
         }
 
-        .btn-emerald {
-            background: linear-gradient(135deg, #059669, #10b981);
-            box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.4);
+        .btn-blue {
+            background: linear-gradient(135deg, #2563eb, #38bdf8);
+            box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.5);
+        }
+        .btn-blue:hover {
+            box-shadow: 0 12px 25px -4px rgba(37, 99, 235, 0.65);
         }
 
-        .btn-emerald:hover {
-            box-shadow: 0 12px 25px -4px rgba(16, 185, 129, 0.55);
+        .join-code-input {
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 3px;
+            font-family: 'Outfit', monospace;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--accent-amber);
         }
 
-        .btn-purple {
-            background: linear-gradient(135deg, #7c3aed, #a855f7);
-            box-shadow: 0 8px 20px -4px rgba(168, 85, 247, 0.4);
+        /* TERMS & RULES SECTION */
+        .terms-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px 28px;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
         }
 
-        .btn-purple:hover {
-            box-shadow: 0 12px 25px -4px rgba(168, 85, 247, 0.55);
-        }
-
-        .divider {
+        .terms-header {
             display: flex;
             align-items: center;
-            text-align: center;
-            margin: 14px 0;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .divider span {
-            padding: 0 12px;
-        }
-
-        .join-box {
-            display: flex;
-            gap: 8px;
-        }
-
-        .join-input {
-            flex: 1;
-            text-transform: uppercase;
-            text-align: center;
-            letter-spacing: 2px;
-            font-weight: 800;
-        }
-
-        .features-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            margin-top: 20px;
-            padding-top: 18px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
         }
 
-        .feature-tag {
-            text-align: center;
-            font-size: 0.75rem;
+        .terms-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--accent-blue);
+        }
+
+        .terms-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .rule-item {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 14px;
+        }
+
+        .rule-title {
+            font-weight: 800;
+            font-size: 0.92rem;
+            color: var(--text-main);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rule-desc {
+            font-size: 0.82rem;
             color: var(--text-muted);
-            font-weight: 600;
+            line-height: 1.4;
         }
 
-        .feature-tag span {
-            display: block;
-            font-size: 1.1rem;
-            margin-bottom: 2px;
-        }
-
-        @media (max-width: 480px) {
+        @media (max-width: 600px) {
             .main-title { font-size: 2.2rem; }
-            .lobby-card { padding: 20px 16px; }
+            .main-card { padding: 20px 16px; }
+            .terms-grid { grid-template-columns: 1fr; }
+            .mode-cards-grid { grid-template-columns: 1fr; }
             .avatar-grid { grid-template-columns: repeat(3, 1fr); }
             .colors-row { grid-template-columns: repeat(3, 1fr); }
-            .join-box { flex-direction: column; }
         }
     </style>
 </head>
@@ -408,16 +469,28 @@
     <div class="bg-glow-1"></div>
     <div class="bg-glow-2"></div>
 
-    <div class="main-wrapper">
+    <div class="container">
+        <!-- Header -->
         <header class="header">
             <div class="logo-badge">
-                <span>⚡ Realtime Arena</span>
+                <span>⚡ Realtime Multiplayer Arena</span>
             </div>
             <h1 class="main-title">SNAKES & LADDERS</h1>
-            <p class="subtitle">Live Realtime Multiplayer for 2, 3, or 4 Players</p>
+            <p class="subtitle">Realtime Multi-Device Board Game with Admin Controls</p>
         </header>
 
-        <div class="lobby-card">
+        <!-- Navigation Tabs: Create Game vs Join Game -->
+        <div class="tabs-nav">
+            <button type="button" class="tab-btn active" id="tab-create" onclick="switchTab('create')">
+                <span>👑 Create Game (Admin)</span>
+            </button>
+            <button type="button" class="tab-btn" id="tab-join" onclick="switchTab('join')">
+                <span>🔗 Join Existing Game</span>
+            </button>
+        </div>
+
+        <!-- Main Form Card -->
+        <div class="main-card">
             <form id="lobby-form" method="POST" action="">
                 {% csrf_token %}
                 <input type="hidden" id="selected-avatar" name="avatar" value="🦊">
@@ -425,16 +498,16 @@
                 <input type="hidden" id="selected-target" name="target_players" value="2">
                 <input type="hidden" id="form-action" name="action" value="create">
 
-                <!-- Player Name -->
+                <!-- 1. Player Name -->
                 <div class="input-group">
                     <label class="section-label" for="player_name">Your Player Name</label>
                     <div class="name-row">
-                        <input type="text" id="player_name" name="player_name" class="text-input" placeholder="Enter your name" maxlength="15" autocomplete="off" required>
+                        <input type="text" id="player_name" name="player_name" class="text-input" placeholder="Enter player name" maxlength="15" autocomplete="off" required>
                         <button type="button" class="btn-dice-random" title="Generate Random Name" onclick="generateRandomName()">🎲</button>
                     </div>
                 </div>
 
-                <!-- Avatar Selection -->
+                <!-- 2. Avatar Selection -->
                 <div class="input-group">
                     <label class="section-label">Choose Avatar</label>
                     <div class="avatar-grid" id="avatar-grid">
@@ -447,7 +520,7 @@
                     </div>
                 </div>
 
-                <!-- Color Selection Swatches -->
+                <!-- 3. Color Selection -->
                 <div class="input-group">
                     <label class="section-label">Choose Token Color</label>
                     <div class="colors-row" id="colors-row">
@@ -460,52 +533,93 @@
                     </div>
                 </div>
 
-                <!-- Match Players Capacity (For Room Creation) -->
-                <div class="input-group" id="capacity-group">
-                    <label class="section-label">Room Capacity (When Creating Room)</label>
-                    <div class="players-count-group">
-                        <div class="player-count-btn active" data-count="2" onclick="setTargetCount(2)">👥 2 Players</div>
-                        <div class="player-count-btn" data-count="3" onclick="setTargetCount(3)">👥 3 Players</div>
-                        <div class="player-count-btn" data-count="4" onclick="setTargetCount(4)">👥 4 Players</div>
+                <!-- 4. CREATE GAME (ADMIN) SETTINGS -->
+                <div id="create-settings-panel">
+                    <!-- Game Mode -->
+                    <div class="input-group">
+                        <label class="section-label">Game Mode</label>
+                        <div class="mode-cards-grid">
+                            <div class="mode-card active" data-mode="create" onclick="setGameMode('create')">
+                                <span class="mode-icon">🌐</span>
+                                <span class="mode-title">Online Room</span>
+                            </div>
+                            <div class="mode-card" data-mode="instant_bot" onclick="setGameMode('instant_bot')">
+                                <span class="mode-icon">🤖</span>
+                                <span class="mode-title">vs AI Bots</span>
+                            </div>
+                            <div class="mode-card" data-mode="pass_and_play" onclick="setGameMode('pass_and_play')">
+                                <span class="mode-icon">💻</span>
+                                <span class="mode-title">Pass & Play</span>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Number of Players -->
+                    <div class="input-group">
+                        <label class="section-label">Admin: Select Number of Players to Join</label>
+                        <div class="players-count-group">
+                            <div class="player-count-btn active" data-count="2" onclick="setTargetCount(2)">👥 2 Players</div>
+                            <div class="player-count-btn" data-count="3" onclick="setTargetCount(3)">👥 3 Players</div>
+                            <div class="player-count-btn" data-count="4" onclick="setTargetCount(4)">👥 4 Players</div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Create Button -->
+                    <button type="submit" class="btn-primary" id="btn-create-submit">
+                        <span>👑 CREATE MATCH (AS ADMIN)</span>
+                    </button>
                 </div>
 
-                <!-- Action Modes -->
-                <div class="action-cards">
-                    <!-- Create Room -->
-                    <button type="submit" class="btn-primary btn-emerald" onclick="setAction('create')">
-                        <span>👑 Create Match Room</span>
-                    </button>
-
-                    <!-- Instant Play vs AI -->
-                    <button type="submit" class="btn-primary btn-purple" onclick="setAction('instant_bot')">
-                        <span>⚡ Instant Play vs AI Bot</span>
-                    </button>
-
-                    <div class="divider"><span>OR JOIN WITH CODE</span></div>
-
-                    <!-- Join Room -->
-                    <div class="join-box">
-                        <input type="text" id="room_code" name="room_code" class="text-input join-input" placeholder="ROOM CODE" maxlength="6" autocomplete="off">
-                        <button type="submit" class="btn-primary" style="width: auto; padding: 0 20px;" onclick="setAction('join')">
-                            <span>Join</span>
-                        </button>
+                <!-- 5. JOIN GAME PANEL (Hidden on initial load) -->
+                <div id="join-settings-panel" style="display:none;">
+                    <div class="input-group">
+                        <label class="section-label" for="room_code">Enter 6-Digit Room Code</label>
+                        <input type="text" id="room_code" name="room_code" class="text-input join-code-input" placeholder="ABC123" maxlength="6" autocomplete="off">
                     </div>
+
+                    <button type="submit" class="btn-primary btn-blue">
+                        <span>🚀 JOIN MATCH ARENA</span>
+                    </button>
                 </div>
             </form>
+        </div>
 
-            <div class="features-row">
-                <div class="feature-tag">
-                    <span>🌐 💻</span>
-                    Multi-Device Sync
+        <!-- 6. TERMS & GAME RULES CARD -->
+        <div class="terms-card">
+            <div class="terms-header">
+                <span style="font-size:1.4rem;">📜</span>
+                <h2 class="terms-title">Rules & Terms of the Game</h2>
+            </div>
+
+            <div class="terms-grid">
+                <div class="rule-item">
+                    <div class="rule-title">👑 Admin Control</div>
+                    <div class="rule-desc">The room creator acts as Admin, sets the required player count (2, 3, or 4), and starts the match once players enter.</div>
                 </div>
-                <div class="feature-tag">
-                    <span>🎨 🐍</span>
-                    Color Choice & SVG
+
+                <div class="rule-item">
+                    <div class="rule-title">🚫 Locked Dice Rolling</div>
+                    <div class="rule-desc">Dice rolling is locked until the Admin starts the game and all players are placed on the board.</div>
                 </div>
-                <div class="feature-tag">
-                    <span>🔊 🏆</span>
-                    Sounds & Confetti
+
+                <div class="rule-item">
+                    <div class="rule-title">🎲 Realtime Turn Rotation</div>
+                    <div class="rule-desc">Each player rolls on their turn. When a player moves, all other connected laptops view the movement in real time.</div>
+                </div>
+
+                <div class="rule-item">
+                    <div class="rule-title">🐍 Snakes & 🪜 Ladders</div>
+                    <div class="rule-desc">Stepping on a snake head slides you down to its tail. Stepping on a ladder foot climbs you straight to the top!</div>
+                </div>
+
+                <div class="rule-item">
+                    <div class="rule-title">🎯 Exact 100 to Win</div>
+                    <div class="rule-desc">You must roll the exact number to land on tile 100. The first player to reach 100 wins the match trophy!</div>
+                </div>
+
+                <div class="rule-item">
+                    <div class="rule-title">🎨 Color Selection</div>
+                    <div class="rule-desc">Every player can choose their custom token color from the palette, visible to all players in the arena.</div>
                 </div>
             </div>
         </div>
@@ -525,6 +639,29 @@
         window.addEventListener('DOMContentLoaded', () => {
             generateRandomName();
         });
+
+        // Tab Switcher
+        function switchTab(tab) {
+            const tabCreate = document.getElementById('tab-create');
+            const tabJoin = document.getElementById('tab-join');
+            const createPanel = document.getElementById('create-settings-panel');
+            const joinPanel = document.getElementById('join-settings-panel');
+            const formAction = document.getElementById('form-action');
+
+            if (tab === 'create') {
+                tabCreate.classList.add('active');
+                tabJoin.classList.remove('active');
+                createPanel.style.display = 'block';
+                joinPanel.style.display = 'none';
+                formAction.value = 'create';
+            } else {
+                tabJoin.classList.add('active');
+                tabCreate.classList.remove('active');
+                createPanel.style.display = 'none';
+                joinPanel.style.display = 'block';
+                formAction.value = 'join';
+            }
+        }
 
         // Avatar selector
         const avatarOptions = document.querySelectorAll('.avatar-option');
@@ -548,16 +685,20 @@
             });
         });
 
+        // Mode selector
+        function setGameMode(mode) {
+            document.querySelectorAll('.mode-card').forEach(c => {
+                c.classList.toggle('active', c.getAttribute('data-mode') === mode);
+            });
+            document.getElementById('form-action').value = mode;
+        }
+
         // Target Players selector
         function setTargetCount(count) {
             document.querySelectorAll('.player-count-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-count') == count);
             });
             document.getElementById('selected-target').value = count;
-        }
-
-        function setAction(act) {
-            document.getElementById('form-action').value = act;
         }
 
         // Form Submit Validation
